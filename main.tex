@@ -1,0 +1,89 @@
+\documentclass[a4paper,14pt]{extbook}
+
+% inserire il conteggio fino alle subsubsection
+\setcounter{secnumdepth}{3}
+
+% Stile delle intestazioni
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % Svuota le intestazioni e i piè di pagina
+\fancyhead{} % Rimuove il titolo del capitolo dalle intestazioni
+\fancyfoot[C]{\thepage} % Mantiene il numero di pagina al centro del piè di pagina
+
+\pagestyle{plain}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[italian]{babel}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor} 
+
+% Title Page Information
+\title{
+    \includegraphics[width=0.4\textwidth]{logo_unina.png} \\ % Modifica 'logo' con il nome del file del tuo logo
+    \vspace{1cm}
+    \Huge{Architettura e progettazione dei calcolatori} \\
+    \vspace{0.5cm} 
+    \Large{Ingegneria Informatica Magistrale}
+}
+\author{\textbf{Agostino D'Amora}} % Modifica con il tuo nome
+\date{\today}
+
+% Motorola 68k sensitive
+\lstdefinelanguage{Motorola68k}{
+    morekeywords={MOVE, ADD, SUB, MULS, MULU, DIVS, DIVU, AND, OR, EOR, NOT, CLR, NEG, EXT, CMP, TST, BSET, BCLR, BCHG, BTST, BRA, BSR, BEQ, BNE, BCC, BCS, BVC, BVS, BPL, BMI, BGE, BLT, BGT, BLE, DBEQ, DBNE, DBCC, DBCS, DBVC, DBVS, DBPL, DBMI, DBGE, DBLT, DBGT, DBLE, JMP, JSR, RTS, RTE, RTD, TRAP, STOP, RESET, NOP, LEA, PEA, LINK, UNLK, SWAP, EXG, EXT, ASL, ASR, LSL, LSR, ROL, ROR, ROXL, ROXR},
+    morecomment=[l]*,
+    morecomment=[n]{/*}{*/},
+    morestring=[b]\",
+    morestring=[b]',
+    sensitive=true,
+    keywordstyle=\bfseries\color{blue},
+    commentstyle=\itshape\color{gray},
+    stringstyle=\color{red},
+    basicstyle=\ttfamily\small,
+}
+
+\lstset{
+  language=Motorola68k,
+  basicstyle=\ttfamily\small, % Font del codice
+  keywordstyle=\color{blue}\bfseries, % Stile delle keyword
+  commentstyle=\color{green!50!black}\itshape, % Stile dei commenti
+  stringstyle=\color{red}, % Stile delle stringhe
+  numbers=left, % Numeri di linea a sinistra
+  numberstyle=\tiny, % Font dei numeri di linea
+  stepnumber=1, % Intervallo delle linee numerate
+  breaklines=true, % Spezza automaticamente le righe lunghe
+  frame=single, % Bordo intorno al codice
+  rulecolor=\color{gray}, % Colore del bordo
+  backgroundcolor=\color{gray!10}, % Colore di sfondo
+  tabsize=2, % Ampiezza del tab
+  captionpos=b, % Posizione della didascalia
+  showstringspaces=false % Non mostra gli spazi nelle stringhe
+}
+
+% Document
+\begin{document}
+
+% Title Page
+\maketitle
+\newpage
+
+% Table of Contents
+\tableofcontents
+\newpage
+
+% Include chapters
+\include{Introduzione}
+\include{chapter1} % Capitolo 1
+\include{chapter2} % Capitolo 2
+% Aggiungi altri file di capitoli se necessario
+
+\appendix
+\include{appendice}
+\end{document}
