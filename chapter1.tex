@@ -1,25 +1,20 @@
-\chapter{Richiami ed approfondimenti sui sistemi di elaborazione}
+\chapter{Richiami ed approfondimenti sui sistemi di
+elaborazione}
 In questo capitolo sarà affrontata principalmente la parte iniziale del corso che si occupa della scrittura di programmi utilizzando il linguaggio Motorola 68k. L'interesse non sarà volto alla tipologia di architettura, anche se a volte ci sarà il bisogno di specificarla, quanto al suo utilizzo effettivo nell'ambito del corso
 
 \section{Richiami di Motorola 68k}
-Le architetture con cui sono progettate i più moderni processori possono essere di 2 tipologie:
-\begin{itemize}
-    \item \textbf{CISC (Complex-Istruction-Set-Computer)}: dove le istruzioni a disposizione del programmatore possono essere anche più complesse (comprendono l'utilizzo anche di più istruzioni semplici), un classico esempio è la memorizzazione di un dato in una memoria, che nel caso CISC può essere effettuato tramite un singolo comando
-
-    \item \textbf{RISC (Reduced-Istruction-Set-Computer}: L'architettura del microprocessore permette l'utilizzo di un set più ridotto di istruzioni, semplici e lineari, tali istruzioni a differenza del paradigma CISC, possono essere più veloci, ma non ripagano in termini di complessità per l'effettuazione di determinate operazioni (come nel caso della memorizzazione di una dato in memoria)
-\end{itemize}
-
-Nel nostro caso noi utilizzeremo il Motorola 68k a 16/32 bit, dove tali bit indicano la grandezza dei registri, e di conseguenza, dei bus di collegamento tra essi. L'architetture di tale microprocessore è CISC, ma noi utilizzeremo un set ridotto di tutte le funzioni messe a disposizione dal Motorola, in modo da poter avere anche la confidenza giusta per affrontare, in futuro, anche tipologie di architetture RISC.
+Il Motorola 68k è un microprocessore con architettura di tipo CISC, essa è principalmente costituita da vari registri con diverse tipologie di utilizzo. Tali registri, però, non sono una caratteristica specifica dell'architettura del Motorola 68k, pertanto è buona norma introdurre l'architettura generale di vari tipologie di microprocessori. Tali caratteristiche, quindi, non sono intrinseche del solo Motorola 68k ma sono legate alla natura stessa delle varie microarchitetture dei vari processori
 
 \subsection{Architettura generale}
 Quando si interagisce con le microarchitetture si lavora con vari tipologie di registri, la cui dimensione è descritta del costruttore.
-I registri possono essere divisi principalmente in registri utilizzabili dal programmatore (o registri utilizzabili) e quelli che non possono essere utilizzati dal programmatore (o non utilizzabili). Tale suddivisione vi è poichè alcuni registri all'interno della microarchitettura vengono utilizzati per effettuare delle operazioni pilotate dalla CU. Tali registri sono tutti interni alla CPU (Ricordando che la cpu è formata da CU, ALU e registri interni). I registri interni utilizzabili dal programmatore sono anche chiamati \textit{registri macchina} e possono essere di vario tipo:
+I registri possono essere divisi principalmente in registri utilizzabili dal programmatore (o registri utilizzabili) e quelli che non possono essere utilizzati dal programmatore (o non utilizzabili). Tale suddivisione vi è poichè alcuni registri all'interno della microarchitettura vengono utilizzati per effettuare delle operazioni pilotate dalla CU. Tali registri sono tutti interni alla CPU (Ricordando che la cpu è formata da CU, ALU e registri interni). I registri interni utilizzabili dal programmatore sono anche chiamati \textbf{registri macchina (o registri general-purpose)} e possono essere di vario tipo:
 \begin{itemize}
-    \item \textbf{Registri Dato}: Registri che sono utilizzati per conservare un determinato dato su cui vado ad operare con varie tipologie di interazioni. Tali registri sono di una tipologia general-purpose
+    \item \textbf{Registri Dato}: Registri che sono utilizzati per conservare un determinato dato su cui vado ad operare con varie tipologie di interazioni
     \item \textbf{Registri indirizzo}: Registri che sono utilizzati per conservare gli indirizzi a cui magari si vuole accedere in memoria (tipo puntatori in C/C++)
     \item \textbf{Registri Speciali}: Registri utilizzabili dal programmatore ma con funzioni diverse, ovvero:
     \begin{itemize}
         \item \textbf{PC (Program Counter)}: memorizza la posizione del prossimo comando da eseguire del nostro programma
+        \item \textbf{IR (Istruction Register)}: Contiene una copia dell'istruzione prelevata dalla memoria 
         \item \textbf{SR(Status Register)}: registro di stato che contiene varie tipologie di informazione, come il caso di overflow, di azzeramento del risultato, di grado di esecusione (se in administrator mode e quindi con l'accesso ad A'7)
     \end{itemize}
 \end{itemize}
@@ -31,18 +26,30 @@ Tra i registri a cui invece il programmatore non ha accesso vi sono:
 \end{itemize}
 
 \subsubsection{Memoria}
-La memoria per noi funziona come un blocco a cui dati in ingresso i valori dei registri MA, ed in fase di scrittura MB, ed i segnali read e write, essa effettuerà la scrittura o la lettura sulla memoria (nel caso della lettura l'MB diventa un registro di output). \MakeUppercase{è} importante sapere come i bit sono memorizzati in memoria, per tale motivo vi sono due tipologie di identificativi:
+La memoria per noi funziona come un blocco a cui dati indicizzati. Per cui in base all'operazione che la CU va ad effettuare, modifica i valori di: MA, MB, segnale di read e di write.
+Posso memorizzare i dati i memoria in vario modo, quindi posizionandoli in vario modo, tali posizioni rispettano le seguenti due tipologie di organizzazione:
 \begin{itemize}
     \item \textbf{little-endian}: nella memorizzazione di un dato binario, riorganizzato in celle lunghe dei byte, i valori più significativi vengono memorizzati nelle celle con indirizzi più alti, mentre le meno significative in quelli con indirizzi più bassi
     \item \textbf{big-endian}: nella memorizzazione di un dato binario, riorganizzato in celle lunghe 1 Byte, esso sarà memorizzato inserendo i bit più significativi nelle celle con indirizzo più basso mentre i bit meno significativi in quelle con indirizzo più alto
 \end{itemize}
 
-\MakeUppercase{è} indifferente ai fini del funzionamento del processore quale sia la tipologia di organizzazione dell'architettura. Ma bisogna averne una conoscenza perchè è importante far capire all'unità di controllo come deve trattare i dati che sta andando a prelevare. Nel caso del Motorola 68k ci troviamo a contatto con un processore little-endian.
+\MakeUppercase{è} indifferente ai fini del funzionamento del processore quale sia la tipologia di organizzazione dei dati in memoria. Ma bisogna averne una conoscenza perchè è importante far capire all'unità di controllo come deve trattare i dati che sta andando a prelevare. Nel caso del Motorola 68k ci troviamo a contatto con un processore con organizzazione big-endian.
 \\
 Oltre all'organizzazione dei dati un altro problema della gestione della memoria è il suo allineamento in memoria, dato dal fatto della gestione delle sue celle di byte in maniera "indipendente".
-Nel caso del motorola 68k, sono consentiti gli accessi in memoria anche a porzioni diverse di byte, ma tali porzioni hanno il vincolo di poter essere obbligatoriamente o da 2 o da 4 Byte che iniziano in posizioni di memoria pari
+Nel caso del motorola 68k, sono consentiti gli accessi in memoria anche a porzioni diverse di byte, ma tali porzioni hanno il vincolo di poter essere obbligatoriamente o da 2 o da 4 Byte che iniziano in posizioni di memoria pari. Quindi si possono avere degli errori se si accede a posizioni di memoria dispari
+\\
+A volte quando si lavora con gli indirizzi di memoria si può andare anche in contro al problema dell'\textbf{Aliasing}, ovvero un problema che riguarda l'accesso a locazioni di memoria sbagliate rispetto a quelle effettivamente desiderate (nel caso del 68k questo problema è dovuto al fatto che possiede 24 fili di bus ma i registri sono a 32 bit, per cui se prelevo un indirizzo dalla memoria, perdendo gli 8 bit più significativi, se facco accesso all'indirizzo caricato, posso confonderlo con uno più piccolo)
+\\
+\\
+La memoria, quindi memorizza varie tipologie di dati e di istruzioni. Pertanto è corretto dividere la memoria rispetto a queste due parti, per cui, la memoria sarà organizzata da due principali parti:
+\begin{itemize}
+    \item \textbf{Area codice (o area istruzioni)}: Area dove sono contenuti i programmi e le istruzioni da eseguire
+    \item \textbf{Area dati}: Area dove sono memorizzati i dati
+\end{itemize}
 
-\subsection{Istruzioni}
+In generale le aree minori sono le aree codice, mentre le restanti sono aree dati
+
+\subsection{Istruzioni}\label{par:istruzioni}
 In generale le istruzioni offerte dalle architetture, sono formate da tre principali parti:
 \begin{itemize}
     \item \textbf{Codici operativi}: Operazioni elementari implementate in base all'architettura del processore, quindi istruzioni appartenenti al processore che specificano tutti i registri ed i passaggi da effettuare per determinate operazioni
@@ -62,9 +69,21 @@ In generale un istruzione è una composizione di bit, essa stessa immagazzinata 
     \item \textbf{Indice + spiazzamento}: la locazione di memoria a cui si vuole fare riferimento viene acceduta tramite un indice, che identifica una determinata zona della memoria rispetto ad un indirizzo (quindi tipo spiazzamento fisso) + un possibile ulteriore spiazzamento (per capire bene immaginarsi la memorizzazione e l'accesso a valori di una matrice)
 \end{itemize}
 
+% Da sistemare questa parte
 Le istruzioni che vengono implementate per una particolare architettura vengono chiamate \textbf{ISA(Istruction Set Architecture)}, e che quindi possono essere o di tipo RISC o di tipo CISC in base alle scelte di progettazione.
 
-Le istruzione, in generale possono essere classificate nel seguente modo:
+Le architetture con cui sono progettate i più moderni processori possono essere di 2 tipologie:
+\begin{itemize}
+    \item \textbf{CISC (Complex-Istruction-Set-Computer)}: dove le istruzioni a disposizione del programmatore possono essere anche più complesse (comprendono l'utilizzo anche di più istruzioni semplici), un classico esempio è la memorizzazione di un dato in una memoria, che nel caso CISC può essere effettuato tramite un singolo comando
+
+    \item \textbf{RISC (Reduced-Istruction-Set-Computer}: L'architettura del microprocessore permette l'utilizzo di un set più ridotto di istruzioni, semplici e lineari, tali istruzioni a differenza del paradigma CISC, possono essere più veloci, ma non ripagano in termini di complessità per l'effettuazione di determinate operazioni (come nel caso della memorizzazione di una dato in memoria)
+\end{itemize}
+
+Nel nostro caso noi utilizzeremo il Motorola 68k a 16/32 bit, dove tali bit indicano la grandezza dei registri, e di conseguenza, dei bus di collegamento tra essi. L'architettura di tale microprocessore è CISC, ma noi utilizzeremo un set ridotto di tutte le funzioni messe a disposizione dall'M68k, in modo da poter avere anche la confidenza giusta per affrontare, in futuro, anche tipologie di architetture RISC.
+
+Per l'esecuzione di una particolare istruzione, il microprocessore deve, prima prelevarla dalla memoria. La specifica su quale istruzione prelevare la conserva il PC (Program Counter) che conserva l'indirizzo di memoria da cui prelevare la prossima istruzione. Una volta prelevata l'istruzione dalla memoria tramite gli indirizzi MA ed MB, questa viene caricata nell'IR, che conserverà tale istruzione durante tutto il processo di decodifica ed esecuzione delle operazioni specificate
+
+Le istruzioni, in generale possono essere classificate nel seguente modo:
 
 \begin{itemize}
     \item \textbf{Trasferimento dati}: Codici che mi permettono di copiare un dato da un determinato operando e spostarlo nell'altro (MOVE)
@@ -83,4 +102,5 @@ Le istruzione, in generale possono essere classificate nel seguente modo:
 \end{itemize}
 
 \subsection{Costrutti Motorola 68k}
-Una volta introdotti i concetti "teorici" e tecnologici da conoscere, si possono iniziare ad osservare i principali costrutti per la programmazione con il Motorola 68k. I costrutti principali ci permettono di capire
+Una volta introdotti i concetti "teorici" e tecnologici da conoscere, si possono iniziare ad osservare i principali costrutti per la programmazione con il Motorola 68k.
+Conviene, quindi, non solo capire quali sono i determinati codici per le varie tipologie di istruzioni specificate in [\ref{par:istruzioni}], ma anche come costruire i principali componenti di un linguaggio di più alto livello (di cui si presupponen una minima conoscenza) tali costrutti possono essere: cicli, blocchi di decisione, ecc.

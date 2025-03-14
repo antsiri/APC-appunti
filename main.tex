@@ -1,4 +1,4 @@
-\documentclass[a4paper,14pt]{extbook}
+\documentclass[a4paper, 12pt]{extbook}
 
 % inserire il conteggio fino alle subsubsection
 \setcounter{secnumdepth}{3}
@@ -7,7 +7,7 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{} % Svuota le intestazioni e i piè di pagina
-\fancyhead{} % Rimuove il titolo del capitolo dalle intestazioni
+\fancyhead[LE,RO]{} % Rimuove il titolo del capitolo dalle intestazioni
 \fancyfoot[C]{\thepage} % Mantiene il numero di pagina al centro del piè di pagina
 
 \pagestyle{plain}
@@ -28,12 +28,13 @@
 \title{
     \includegraphics[width=0.4\textwidth]{logo_unina.png} \\ % Modifica 'logo' con il nome del file del tuo logo
     \vspace{1cm}
+    \Large{Appunti di\\}
     \Huge{Architettura e progettazione dei calcolatori} \\
     \vspace{0.5cm} 
-    \Large{Ingegneria Informatica Magistrale}
+    \Large{Corso di laurea magistrale in\\\textbf{Ingegneria Informatica}}
 }
-\author{\textbf{Agostino D'Amora}} % Modifica con il tuo nome
-\date{\today}
+\author{\textbf{}} % Modifica con il tuo nome
+\date{}
 
 % Motorola 68k sensitive
 \lstdefinelanguage{Motorola68k}{
