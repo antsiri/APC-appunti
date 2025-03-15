@@ -456,7 +456,79 @@ Le chiamate a subroutine possono essere viste come una sorta di chiamate a funzi
     \item \textbf{Con Stack}: Gli operandi sono locati sullo stack, ciò richiede quindi una gestione anche del puntatore dello stack SP
 \end{itemize}
 
+Un esempio di chiamata a subroutine con memorizzazione degli operandi nello stack è il seguente:
+\begin{lstlisting}
+            MOVE.L  #5, D0        * Carica il primo operando in D0
+            MOVE.L  #10, D1       * Carica il secondo operando in D1
 
+            MOVE.L  D0, -(A7)     * Push del primo operando nello stack
+            MOVE.L  D1, -(A7)     * Push del secondo operando nello stack
+
+            JSR     SUM_SUB       * Chiamata alla subroutine
+
+            MOVE.L  (A7)+, D2     * Il chiamante preleva il risultato dallo stack
+
+            ADDQ.L  #8, A7        * Pulizia dello stack (2 valori da 4 byte)
+
+            * D2 ora contiene il risultato della somma
+
+            * Codice successivo...
+
+SUM_SUB:    MOVE.L  (A7)+, D0     * Pop del primo operando dallo stack
+            MOVE.L  (A7)+, D1     * Pop del secondo operando dallo stack
+
+            ADD.L   D1, D0        * Somma D0 + D1, risultato in D0
+
+            MOVE.L  D0, -(A7)     * Push del risultato nello stack
+
+            RTS                   * Ritorna al chiamante
+\end{lstlisting}
+\newpage
+Esempio di chiamata a subroutine con operandi nello stack e risultato memorizzato nello stack
+\begin{lstlisting}
+            MOVE.L  #5, D0        * Carica il primo operando in D0
+            MOVE.L  #10, D1       * Carica il secondo operando in D1
+
+            MOVE.L  D0, -(A7)     * Push del primo operando nello stack
+            MOVE.L  D1, -(A7)     * Push del secondo operando nello stack
+
+            JSR     SUM_SUB       * Chiamata alla subroutine
+
+            MOVE.L  (A7)+, D2     * Il chiamante preleva il risultato dallo stack
+
+            ADDQ.L  #8, A7        * Pulizia dello stack (2 valori da 4 byte)
+
+            * D2 ora contiene il risultato della somma
+
+            * Codice successivo...
+
+SUM_SUB:    MOVE.L  (A7)+, D0     * Pop del primo operando dallo stack
+            MOVE.L  (A7)+, D1     * Pop del secondo operando dallo stack
+
+            ADD.L   D1, D0        * Somma D0 + D1, risultato in D0
+
+            MOVE.L  D0, -(A7)     * Push del risultato nello stack
+
+            RTS                   * Ritorna al chiamante
+\end{lstlisting}
+
+Caso di utilizzo dei registri interni, sia per passaggio operandi di ingresso che di uscita:
+
+\begin{lstlisting}
+            MOVE.L  #5, D0       * Primo operando in D0
+            MOVE.L  #10, D1      * Secondo operando in D1
+
+            JSR     SUM_REGS     * Chiamata alla subroutine
+
+            * Dopo il ritorno, il risultato e' in D0
+
+            * Codice successivo...
+
+SUM_REGS:   ADD.L   D1, D0       * Somma D0 + D1, risultato in D0
+
+            RTS                  * Ritorna al chiamante
+
+\end{lstlisting}
 
 \subsection{Valutazione degli accessi in memoria}
 Quando utilizzo i comandi precedentemente presentati avrò una quantità diversa di accessi in memoria in base alla composizione che ho dato al mio codice. Gli accessi in memoria dipendono fortemente dalla tipologia di architettura che ho adottato. In generale gli accessi in memoria possono avvenire per 2 tipologie di operazioni: Accesso in memoria Per le Istruzioni (PI) o accesso in memoria Per le Operazioni (PO).
