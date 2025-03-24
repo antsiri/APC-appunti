@@ -5,11 +5,13 @@ Data l'eterogeneità di tali periferiche è richiesto che queste ultime siano ge
 \section{Architettura generale di un dispositivo di I/O}
 In generale un dispositivo di I/O può essere visto come l'insieme di tre parti fondamentali:
 \begin{itemize}
-    \item \textbf{Registri Dato, Stato e Controllo}: Tali registri sono quelli che interagiscono in maniera diretta con la CPU, e vengono utilizzati da quest'ultima per controllare e gestire le informazioni di quel dato dispositivo. Tali registri sono presenti per tutte le tipologie di periferiche
+
+    \item \textbf{Registri Dato, Stato e Controllo}: Tali registri sono quelli che interagiscono in maniera diretta con la CPU, e vengono utilizzati da quest'ultima per controllare e gestire le informazioni di quel dato dispositivo. Tali registri sono presenti internamente all'architattura del Calcolatore (ad esempio sulla scheda madre)
     
-    \item \textbf{Sistema di adattamento}: Il sistema di adattamento adatta i segnali provenienti dal mondo esterno per essere letti o scritti nei registri di Dato, Stato e Controllo
+    \item \textbf{Sistema di adattamento}: Il sistema di adattamento adatta i segnali provenienti dal mondo esterno per essere letti o scritti nei registri di Dato, Stato e Controllo, e quindi permette di adattare l'attacco esterno (tipo l'USB che utilizza comunicazioni sequenziali), con la comunicazione parallela che il processore ha con i registri
     
-    \item \textbf{Mondo esterno}: Per mondo esterno si intende tutta la parte che interagisce con il dispositivo in maniera fisica
+    \item \textbf{Mondo esterno}: Per mondo esterno si intende tutta la parte che interagisce con il dispositivo in maniera fisica, ed il dispositivo fisico stesso. Quindi immaginiamoci anche una tastiera con il suo connettore USB
+
 \end{itemize}
 
 Un esempio di dispositivo esterno è la memoria HDD.
@@ -66,22 +68,87 @@ Data una tipologia di bus, può capitare che la periferica che vado ad utilizzar
 \subsection{Driver}
 I driver sono dei programmi che permettono di capire come il processore vada ad utilizzare una determinata periferica.
 Le tipologie di approccio che si possono avere nella scrittura dei driver sono varie, la più primitiva è il polling.
-Il \textbf{Polling} è un modo con cui il processore va ad interagire con la periferica. In generale si va a dare un primo segnale di controllo alla periferica e si aspetta un'altro specifico dato di controllo si alzi per poter utilizzare o accedere al dato. Tali sistema è altamente inefficiente, poichè mentre la CPU aspetta la riposta della periferica passano dei periodi di clock dove la CPU rimane ferma. Il tempo che quindi la CPU rimane senza eseguire delle operazioni utili è detto \textbf{Busy-waiting}. Un possibile codice di implementazione del polling è [\ref{m68:polling}]
+Il \textbf{Polling} è un modo con cui il processore va ad interagire con la periferica. In generale si va a dare un primo segnale di controllo alla periferica e si aspetta uno specifico valore di stato per poter accedere al dato. Tali sistema è altamente inefficiente, poichè mentre la CPU aspetta la riposta della periferica passano dei periodi di clock dove la CPU rimane ferma. Il tempo che quindi la CPU rimane senza eseguire delle operazioni utili è detto \textbf{Busy-waiting}. Un possibile codice di implementazione del polling è [\ref{m68:polling}]
 
 \begin{lstlisting}[caption={Codice polling}, label=m68:polling]
-L1      MOVE.B  #00000000,Stato     *Imposto lo stato iniziale
-        MOVE.B  #00000001,Controllo *Abilito la "richiesta"
-        MOVE.B  Stato,D0              *Prelevo lo stato
-        AND.B   #01000000,D0        *Il dato e' pronto?
-        BNE     L1                    *Se no ripeti
+        ORG      $8000
+*Inizializzo lo stato dei miei registri
+        MOVE.B   #$00,C
+        MOVE.B   #$00,S
+*Vado a considerare la zona di memoria dove voglio salvare i dati
+        MOVEA.L  #VAR1,A0
+        MOVE.W  #0,D0
+*Devo prelevare N dati quindi ciclo N volte
+FOR     CMP.W   #N,D0
+        BGE   FUORI
+
+*Qui devo scrivere il driver sapendo  che devo ricevere un byte
+
+        MOVE.B  #$01,C  *Vado a settare un controllo
+*Qui inizia il ciclo di polling dove attendo uno specifico valore dello stato
+L1      MOVE.B  S,D1
+        AND.B  #$80,D1  *Se il bit si e' alzato ho finito. Altrimenti continuo ad aspettare
+        BEQ  L1  
+
+*Qui il dato e' stato letto, poiche' ho il flag di stato alzato
+        MOVE.B  D,(A0)+ *Inserisco il dato in memoria
+        MOVE.B  #$00,C  *Vado a resettare il segnale di Controllo
+        MOVE.B  #$00,S  *Vado ad "eludere" il sistema su un segnale di stato
+
+FUORI   ADD.B  #1,D0             *Incremento il conteggio
+        BRA  FOR                 *Ripeti
         
-        ORG     $2000
-Dato    DS.B    1
-Stato   DS.B    1
-Ctr     DS.B    1
+        ORG     $8100
+D       DS.B    1   *Registro dato
+S       DS.B    1   *Registro Stato
+C       DS.B    1   *Registro Controllo
 
-        ORG     $8000
-VAR     DC.B    44
+N       EQU     5   *Quantita' di valori da considerare
+VAR1    DS.B    5   *Array effettivo di raccolta dati
 \end{lstlisting}
+\newpage
+Il codice [\ref{m68:polling}] presenta però le seguenti criticità:
+\begin{itemize}
+    \item \textbf{Mancata Generalizzazione}: Si vanno a considerare in maniera diretta i registri in memoria D,S e C. Che per l'implmentazione di un driver riutilizzabile non è proprio la scelta corretta
+    \item \textbf{Polling}: L'attesa che viene svolta all'interno di tale codice non permette al processore di eseguire altri passi prima di aver ricevuto tutti i caratteri
+    \item \textbf{Gestione dei malfunzionamenti}: Se la periferica ha un qualunque tipo di malfunzionamento e quindi non aggiorna mai il registro di stato, tale ciclo eseguirà all'infinito senza mai fermarsi
+\end{itemize}
 
-L'alternativa che si è trovata al polling è l'utilizzo delle interruzioni <Continuare quando lo spiegherà>
+Le due problematiche (o criticità), possono essere affrontate in vario modo. Per la prima la soluzione è molto semplice, al posto di andare a considerare i registri di Dato, Stato e Controllo in maniera diretta, possono essere considerati come registri indirizzo (Ai), a cui vado ad associare gli indirizzi di tali registri. Tali inidirizzi poi vengono settati secondo un determinato criterio prima della chiamata al driver.
+Per ovviare, invece, al secondo problema c'è il bisogno di considerare le \textbf{interruzioni}. Mentre per l'ultimo problema la soluzione è l'introduzione di \textbf{timer}, che permettono di capire quando un sistema sta impiegando un tempo più grande del dovuto per eseguire un operazione, ciò permette di poter gestire ed uscire da situazioni di eventuali guasti.
+
+\subsubsection{Interruzioni}
+L'interruzione è un evento che cambia la normale esecuzione di un programma per fargli eseguire prima del codice specifico per la gestione di quella determinata condizione [\ref{img:bootint}]. In generale non è corretto parlare solo di interruzioni, poichè tale termine non comprende o non può comprendere anche il caso in cui le interruzioni vengano scatenate dall'interno per casistiche particolari. Difatti è più corretto fare la seguente suddivisione:
+\begin{itemize}
+    \item \textbf{Interruzioni}: Segnali che sono a contatto con le periferiche e che permettono alla CPU di interrompersi e di eseguire il codice per la gestione della comunicazione con quella data interfaccia. Le interruzioni sono scatenate, quindi, dal dispositivo che vuole interagire con la CPU
+    \item \textbf{Eccezioni}: Funzionano come le interruzioni, con la differenza che vengono scatenate internamente rispetto al processore, quindi non vengono gestite dai dispositivi ma dal programma stesso, tale condizione fa eseguire comunque una ISR, con l'obbiettivo di dover gestire particolari casistiche (es. divisione per 0)
+\end{itemize}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{img/BootInt.png}
+    \caption{Ciclo di esecuizone con interrupt}\label{img:bootint}
+\end{figure}
+Quindi quando le interruzioni sono scatenate vanno ad effettuare una chiamata a subroutine particolare, tale chiamata è detta ISR (Interrupt-Services-Routine). Tale situazione, quindi, ferma il sistema dalla sua normale esecuzione del programma per dare priorità alla gestione dell'interruzione. Questo, quindi, apre molti dubbi su come gestire lo stato in cui si trova la macchina, poichè se quando torno dalla ISR, ho cambiato qualche registro significativo si potrebbe compromettere il normale funzionamento del programma. In generale i due registri che richiedono l'obbligo di essere salvari sono i registri: \textbf{SR(Status register)} e il \textbf{PC(Program Counter)}. In generale, i registri che vado a salvare in questo passaggio sono anche detti: \textbf{Descrittore di processo}, tali registri, quindi, descrivono lo stato di funzionamento del mio processore quando poi è stato prelazionato dalla mia ISR. Ciò mi permette di proseguire ancora con la normale esecuzione del programma prefissato. 
+
+\subsubsection{Gestione delle Interruzioni}
+Una volta definito cosa sono le interruzioni è di fondamentale importanza capire come il processore le gestisce. Le principali modalità di gestione delle interruzioni sono due e sono:
+\begin{itemize}
+    \item \textbf{Vettorizzate}: Ogni livello di priorità di interrupt è collegato al processore. I fili di collegamento per le interrupt sono limitati, quindi più dispositivi possono collegarsi sullo stesso cavo di interrupt. Il processore, quindi, per identificare il dispositivo che ha scatenato l'Interrupt va a controllare i bus, su cui il dispositivo ha caricato il suo codice identificativo. Identificare il dispositivo, vuol dire identificare la tipologia di ISR da andare ad utilizzare. Gli indirizzi degli entry-point delle varie periferiche sono memorizzati in memoria a partire dall'indirizzo 0 a seguire per 256 locazioni di 4 byte. Tali locazioni si dividono nel seguente modo:
+    \begin{itemize}
+        \item \textbf{Funzioni speciali}: Da 0 a 24, gli entry-point identificano delle funzioni speciali o di gestione aritmentica
+        \item \textbf{Interruzioni autovettorizzate}: da 25 a 31 sono indicizzate le locazioni per il funzionamento autovettorizzato
+        \item \textbf{Trap}: da 32 a 47 sono indicizzate le funzioni per la gestione dei Trap
+        \item \textbf{Utilizzabili}: da 48 a 256 sono locazioni disponibili per l'inserimento degli entry-point per la gestione di diverse periferiche
+    \end{itemize}
+    \item \textbf{Autovattorizzate}: A differenza del caso vettorizzato, evita la lettura del codice identificativo, poichè ogni livello di interrupt è collegato al vettore delle ISR autovettorizzate e permette di selezionare in maniera "ignorante" l'ISR alla locazione della tipologia di priorità inserita
+\end{itemize}
+
+In generale, nel caso di sistema \textbf{vettorizzato}, viene in aiuto il componente \textbf{PIC (Programmable Interrupt Controller)} [\ref{img:PIC}]. Che è un dispositivo che accetta in ingresso 8 fili e kfa uscire l'indirizzo dell'entry point per la chiamata dell'ISR. Ciò permette di sollevare il processore dalla gestione diretta degli interrupt e quindi l'utilizzo di un solo filo di interruzione + la lettura dell'entry-point dell'ISR in maniera diretta. Il PIC gestisce anche tutto il sistema di priorità in maniera ad-hoc.
+Oltre al PIC ci sono anche altri sistemi che permettono di sollevare il processore dalla gestione delle periferiche. Un esempio è il \textbf{DMA}, che gestisce il passaggio dei dati periferica-memoria, senza dover passare per i registri del processore. Esso viene settato ad un valore che va a decrementare mano a mano che riceve i dati dalla periferica.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{img/PIC.png}
+    \caption{PIC(Programmable Interrupt Controller)}\label{img:PIC}
+\end{figure}
