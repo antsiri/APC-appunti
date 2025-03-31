@@ -1,18 +1,53 @@
 \section{PIA}
-La PIA è un dispositivo di comunicazione parallela ad 8 bit. Tale architettura è un dispositivo hardware che si posiziona tra la periferica e il processore stesso. Essa è costituita architetturalmente da due tipologie diverse di porto, il porto A ed il porto B.[\ref{img:PIA}]
+La \textbf{PIA (Periferal Interface adapter)} è un dispositivo di comunicazione parallela ad 8 bit. Tale architettura è un dispositivo hardware che si posiziona tra la periferica e il processore stesso. Essa è costituita architetturalmente da due tipologie diverse di porto, il porto A ed il porto B.[\ref{img:PIA}]
 Tali porti hanno dei registri che sono direzionali, quindi possono assumere una sola funzione (tra entrata ed uscita), in base alla loro specifica impostazione e configurazione.
-Prima di parlare di più porti ci concentriamo sulle comunicazioni a singolo porto; in generale le comunicazioni che avvengono tra due interfacce della PIA sono configurabili tramite i bit di configurazione del chipset. Nel nostro caso, la comunicazione che maggiormente utilizzeremo è quella dotata di handshacking, per cui si avrà una configuraizone ed un collegamento simile all'immagine [\ref{img:PIA-CON}]. Entrando nei dettagli del processo, bisognerà fare particolare attenzione ai seguenti registri:
+Prima di parlare di più porti ci concentriamo sulle comunicazioni a singolo porto; in generale le comunicazioni che avvengono tra due interfacce della PIA sono configurabili tramite i bit di configurazione del chipset. Nel nostro caso, la comunicazione che maggiormente utilizzeremo è quella dotata di handshacking, per cui si avrà una configuraizone ed un collegamento simile all'immagine [\ref{img:PIA-CON}].
+Il dispositivo PIA simulato in ASIM è derivato da quello commerciale MC6821. Questo è dotato di sei registri a 8 bit, tra cui: due registri per il trasferimento dei dati da e verso la periferica (\textit{PRA} e \textit{PRB}); due registri di controllo/stato (\textit{CRA} e \textit{CRB}); infine due registri per il controllo della direzione dei dati (\textit{DRA} e \textit{DRB}). Questi registri sono accessibili mediante indirizzamento interno secondo la tabella \ref{Tab:reg_ind_1}:
+
+\begin{table} [!h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \multicolumn{5}{|c|}{\textbf{Indirizzamento interno}} \\ \hline
+        \textbf{RS1} & \textbf{RS0} & \textbf{CRA2} & \textbf{CRB2} & \textbf{Registro selezionato}\\ \hline
+        0       &0      &1      &X      &PRA    \\  \hline
+        0       &0      &0      &X      &DRA    \\  \hline
+        0       &1      &X      &X      &CRA    \\  \hline
+        1       &0      &X      &1      &PRB    \\  \hline
+        1       &0      &X      &0      &DRB    \\  \hline
+        1       &1      &X      &X      &CRB    \\  \hline
+    \end{tabular}
+    \caption{Indirizzamento interno}
+    \label{Tab:reg_ind_1}
+\end{table}
+
+Questi registri sono selezionabili dal processore mediante le linee RS1 ed RS0.
+Nel dettaglio, i registri di contollo sono a 8 bit suddivisi come indicato in tabella \ref{Tab:control_registers}:
+
+\begin{table}[!ht]
+    \begin{tabular}{|c|r|r|rrr|r|rr|}
+    \hline
+    \multirow{2}{*}{\textbf{CRA}} & \textbf{7}     & \textbf{6}     & \multicolumn{1}{r|}{\textbf{5}} & \multicolumn{1}{r|}{\textbf{4}} & \textbf{3} & \textbf{2}           & \multicolumn{1}{r|}{\textbf{1}} & \textbf{0} \\ \cline{2-9} 
+                                  & \textit{IRQA1} & \textit{IRQA2} & \multicolumn{3}{r|}{\textit{controllo CA2}}                                    & \textit{Accesso DRA} & \multicolumn{2}{r|}{\textit{controllo CA1}}  \\ \hline
+    \multirow{2}{*}{\textbf{CRB}} & \textbf{7}     & \textbf{6}     & \multicolumn{1}{r|}{\textbf{5}} & \multicolumn{1}{r|}{\textbf{4}} & \textbf{3} & \textbf{2}           & \multicolumn{1}{r|}{\textbf{1}} & \textbf{0} \\ \cline{2-9} 
+                                  & \textit{IRB1}  & \textit{IRB2}  & \multicolumn{3}{r|}{\textit{controllo CB2}}                                    & \textit{Accesso DRB} & \multicolumn{2}{r|}{\textit{controllo CB1}}  \\ \hline
+    \end{tabular}
+    \caption{Control Registers}
+    \label{Tab:control_registers}
+\end{table}
+
+Entrando nei dettagli del processo, bisognerà fare particolare attenzione ai seguenti registri:
 \begin{itemize}
-    \item \textbf{CA1,CB1}: Sono registri che possono assumere solo direzione di ingresso e solitamente vengono usati come "lettori" di segnali SYN o segnali ACK da parte dell'altro dispositivo. CIao a tutti
-    \item \textbf{CA2,CB2}: Sono i registri che possono essere configurati(sia di ingresso che di uscita), ed in generale, in base al protocollo che si vuole interpretare, vengono settati in una determinata modalità di funzionamento (dipendente dalla tipologia di protocollo che si vuole implementare)
-    \item \textbf{Dato}: Il bus dati trasmette parallelamente i dati tra le due periferiche in base al protocollo di handshacking utilizzato
+    \item \textbf{CA1,CB1}: Sono registri che possono assumere solo direzione di ingresso e solitamente vengono usati come "lettori" di segnali SYN o segnali ACK da parte dell'altro dispositivo;
+    \item \textbf{CA2,CB2}: Sono i registri che possono essere configurati(sia di ingresso che di uscita), ed in generale, in base al protocollo che si vuole interpretare, vengono settati in una determinata modalità di funzionamento (dipendente dalla tipologia di protocollo che si vuole implementare);
+    \item \textbf{Dato}: Il bus dati trasmette parallelamente i dati tra le due periferiche in base al protocollo di handshacking utilizzato. I bus dati sono unidirezionali ma la direzione è programmabile. 
 \end{itemize}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.45\textwidth]{img/PIA.png}
-    \hfill
-    \includegraphics[width=0.45\textwidth]{img/PIA-SCHEME.jpg}
+    % \includegraphics[width=0.45\textwidth]{img/PIA.png}
+    % \hfill
+    \includegraphics[width=0.75\textwidth]{img/PIA-SCHEME.jpg}
     \caption{Architettura base della PIA}\label{img:PIA}
 \end{figure}
 
@@ -21,11 +56,15 @@ Prima di parlare di più porti ci concentriamo sulle comunicazioni a singolo por
     \includegraphics[width=0.65\textwidth]{img/PIA-CON.png}
     \caption{Collegamento tra due dispositivi tramite PIA}\label{img:PIA-CON}
 \end{figure}
+
 Per far si che le due architetture possano comunicare è quindi importante definire come si andranno a collegare e quindi la direzione e l'interpretazione che devo andare a dare ai registri. Una possibile architettura di collegamento è quella visibile all'immagine [\ref{img:PIA-CON}].
+Le linee D0-D7 sono di interfacciamento con il processore e sono bidirezionali in base alla natura dell'operazione richiesta (lettura o scrittura). 
+Poiché la PIA ha due porti distinti, può essere collegata al processore con due linee di interruzioni differenti denominato \textbf{IRQA} (porto A) e \textbf{IRQB} (porto B).  
+
 Una volta definita la tipologia di architettura si va a decidere come queste periferiche dovranno interagire tra loro (definizione del protocollo o modello di programmazione della PIA), per cui si va ad impostare uno specifico registro di configurazione che permetterà di impostare le seguenti opzioni:
 \begin{itemize}
-    \item \textbf{Interrupt o polling}: A che livello di priorità si andrà ad impostare l'interruzione della PIA
-    \item \textbf{Modalità di funzionamento}: se attuo l'hanshacking o altre tipologie di perotocolli
+    \item \textbf{Interrupt o polling}: A che livello di priorità si andrà ad impostare l'interruzione della PIA;
+    \item \textbf{Modalità di funzionamento}: se attuo l'handshacking o altre tipologie di protocolli;
     \item \textbf{Lettura o scrittura}: 
 
  
@@ -37,8 +76,8 @@ Il funzionamento generale della fase di handshacking tra due dispositivi PIA è 
 Per fare chiarezza andremo a dividere la fase di ricezione dalla fase di trasmissione.
 In fase di \textbf{trasmissione} le operazioni che si vanno ad effettuare sonno le seguenti:
 \begin{itemize}
-    \item \textbf{Inserimento del dato}: Vado a posizionare il dato sui bu dato collegati in maniera diretta con la PIA. Una volta effettuato l'inserimento, la PIA va ad abbassare, in maniera automatica il bit di controllo CA2
-    \item \textbf{Attesa dell'ack}: Il sistema aspetta che l'ack si abbassi per capire che il dato è stato inviato correttamente, in questo momento, dato l'abbassamento del segnali in sola lettura su CA1, si alzerà anche il bit di controllo CRA7
+    \item \textbf{Inserimento del dato}: Vado a posizionare il dato sui bus dato collegati in maniera diretta con la PIA. Una volta effettuato l'inserimento, la PIA va ad abbassare, in maniera automatica il bit di controllo CA2;
+    \item \textbf{Attesa dell'ack}: Il sistema aspetta che l'ack si abbassi per capire che il dato è stato inviato correttamente, in questo momento, dato l'abbassamento del segnali in sola lettura su CA1, si alzerà anche il bit di controllo CRA7;
     \item \textbf{Lettura fittizzia}: Dato che voglio inviare un nuovo dato, ho bisogno di abbassare il bit CRA7, ma non posso farlo in maniera diretta (configurando un apposito registro di controllo), poichè il bit CRA7 è in sola lettura. Di conseguenza per abbassare tale valore vado ad effettuare una lettura a vuoto (o lettura fittizzia), che mi permette di abbassare il bit e di poter proseguire nelle mie operazioni.
 \end{itemize}
 
