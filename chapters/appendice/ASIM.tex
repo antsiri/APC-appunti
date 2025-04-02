@@ -1,0 +1,54 @@
++\section{Asim e Asimtool}
+Per la scrittura e la simulazione dei codici, saranno utilizzati i seguenti strumenti:
+\begin{itemize}
+    \item \textbf{ASIM}: Strumento per la simulazione del motorola 68k
+    \item \textbf{ASIM-Tool}: Editor di testo e compilatore dei file .a68
+\end{itemize}
+
+\subsection{Asimtool}
+
+Per asimtool, dopo aver scritto il file bisogna generare il file \.LIS, che poi sarà inserito all'interno del simultaore ASIM\. Tale file va generato secondo il seguente path: 
+\\
+\textbf{Assemble -> Assemble File <Nome\_File>.a68}
+\\
+Fatta tale operazione, nella cartella dove vi è salvato il file \.a68 dovrebbe essersi generato il file \.LIS
+\\
+Nel caso ci fossero particolari errori, asimtool li mostrerà a video specificando le righe su cui tali errori si presentano. Si invita a tenere ben cura della spaziatura tra i vari comandi e la loro leggittima posizione
+
+
+\subsection{ASIM}
+Una volta generato il file \.LIS con ASIM-tool, aprire ASIM ed impostare l'ambiente. Per impostare l'ambiente è richiesto un file cfg, che riporta i vari componenti che saranno mostrati all'interno del simulatore (tipo la memoria, il processore ecc.).
+Il file base.cfg può essere trovato sui canali ufficiali degli studenti o può essere richiesto al professore. Tale file non contiene altro che una lista di componenti che verranno poi mostrati all'interno del simulatore.
+Una volta aperto il file bisogna seguire il seguente path:
+\\
+\textbf{Window -> Tile}
+\\
+Tale opzione ci permette di poter vedere tutte le schermate aperte in maniera ordinata. Successivamente all'ordinamento delle schermate, bisogna "attivare" la configurazione, per fare ciò bisogna premere su di un tasto nella barra degli strumenti in Alto con illustrata una grossa I.
+Una volta attivato il nostro ambiente, tenere cura di selezionare la finestra su cui c'è scritto di caricare il \.LIS. Una volta fatto questo in alto, tra i menu comparirà una nuova voce, ovvero: \textbf{Proc\_Unit}.
+Una volta apparso tale menu basterà seguire il seguente path per poter selezionare il file \.LIS:
+\\
+\textbf{Proc\_Unit -> Load Assembler}
+\\
+Tale comando permetterà di poter caricare il file \.LIS generato da Asimtool, che dovrà essere selezionato appositamente tramite il file explorer.
+Una volra caricato il file \.LIS bisognerà solo eseguire il programma.
+Si consiglia, prima di eseguire, di attivare la visualizzazione dei registri interni. Tale cosa potrà essere fatta, selezionando la finestra in cui è caricato il file \.LIS e poi seguire il seguente path:
+\\
+\textbf{Proc\_Unit -> Show Registers}
+\\
+Questo permetterà di poter visualizzare i registri interni del processore nella parte bassa della finestra
+
+\subsection{Esecuzione dei programmi}
+Per l'esecuzione dei programmi, si può procedere in due modi:
+\begin{itemize}
+    \item \textbf{Passo Passo}: premendo sull'omino lento in alto
+    \item \textbf{Fino alla fine}: premendo sull'omino che sembra correre
+\end{itemize}
+
+Il consiglio è sempre quello di verificare il funzionamento del programma passo passo e poi di utilizzare l'esecuzione veloce.
+
+Per verificare o controllare particolari indirizzi di memoria si può utilizzare un tool interno.
+Selezionando la memoria (quella che solitamente ha colori blu) e poi seguendo il seguente path:
+\\
+\textbf{Memory -> Show\_Loc}
+\\
+Si aprirà una finestra che ci permetterà di scrivere la locazione di memoria che vogliamo controllare. Una volta inserita e aver premuto "ok", la memorià mostrerà la memoria all'indirizzo richiesto in alto.

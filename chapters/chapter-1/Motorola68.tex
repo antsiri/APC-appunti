@@ -1,0 +1,463 @@
+\section{Motorola 68k}
+Una volta introdotti i concetti "teorici" e tecnologici da conoscere, si possono iniziare ad osservare i principali costrutti per la programmazione con il Motorola 68k.
+Conviene, quindi, non solo capire quali sono i determinati codici per le varie tipologie di istruzioni specificate in [\ref{par:istruzioni}], ma anche come costruire i principali componenti di un linguaggio di più alto livello (di cui si presupponen una minima conoscenza) tali costrutti possono essere: cicli, blocchi di decisione, ecc.
+
+\subsection{Registri General Purpose}
+I registri General-Purpose (o registri macchina) è l'insieme dei registri che sono messi a disposizione del programmatore per scrivere vari codici in accoppiata con gli specifici codici operativi.
+I registri a disposizione, nel caso del motorola 68k sono i seguenti:
+\begin{itemize}
+    \item \textbf{Registri Dato}: Registri D0,D1,\dots,D7
+    \item \textbf{Registri Indirizzo}: Registri A0,A1,\dots,A7 ed A7' (utilizzato nel caso di privilegi alti)
+    \item \textbf{Status Register (SR)}: Registro che contiene vari controlli sia sui risultati delle operazioni dell'ALU che sullo stato dell'esecuzioe (se in super-user o meno)
+\end{itemize}
+
+Tali registri sono fondamentali per l'esecuzione dei comandi come nel caso del 68k. Con tali registri saranno implementati tutti gli algoritmi utili nel resto del corso
+
+\subsection{Codici di Spostamento dati o indirizzi}
+Il principale comando che nel motorola 68k permette lo spostamento dei dati è la \lstinline|MOVE|, che può essere differentemente impostata in base ai seguenti parametri:
+
+\begin{itemize}
+    \item \textbf{Lunghezza degli operandi}: solitamente specificata con delle lettere alla fine del comando
+    \item \textbf{Tipologia di indirizzamento}: La \lstinline|MOVE| è una tra le poche operazioni che ammette tutte le tipologie di indirizzamento possibili, l'unico che può portare degli errori è l'indirizzamento immediato per l'operando di destinazione, che di per se non ha senso
+\end{itemize}
+
+La caratterizzazione del comando \lstinline|MOVE| è la seguente:
+\begin{lstlisting}
+    *Indirizzamento diretto D1 = D0 o D1<-D0
+    MOVE D0,D1
+
+    *Indirizzamento indiretto (sorgente), diretto (destinazione)
+    *D0 = (A0), D0 = contenuto del registro in posizione A0
+    MOVE.W (A0),D0
+
+    *Indirizzamento Indiretto completo A1 = A0
+    MOVE.L (A0),(A1)
+    *o
+    MOVEA.L (A0),(A1)
+    *Indirizzamento immediato + indirizzamento Diretto
+    MOVE.L #14,D0
+
+    * Indirizzamento con spiazzamento su registro di indirizzo
+    MOVE.W 4(A0), D0    * D0 = valore all'indirizzo A0 + 4
+
+    * Indirizzamento con spiazzamento e registro indice
+    MOVE.L 8(A0, D1.L), D2   * D2 = valore all'indirizzo A0 + 8 + D1
+
+    * Indirizzamento PC relativo con spiazzamento
+    MOVE.B 6(PC), D0   * D0 = byte situato 6 byte dopo il Program Counter
+
+    * Push di un registro nello Stack
+    MOVE.L D0, -(A7)   * Salva D0 nello stack (decremento SP)
+
+    * Pop dallo Stack in un registro
+    MOVE.L (A7)+, D0   * Carica D0 con il valore in cima allo stack (incremento SP)
+
+    * Push di un registro di indirizzo
+    MOVEA.L A0, -(A7)  * Salva A0 nello stack
+
+    * Pop di un registro di indirizzo
+    MOVEA.L (A7)+, A0  * Carica A0 con il valore in cima allo stack
+
+    * Salvataggio multiplo nello stack
+    MOVEM.L D0-D3/A0-A2, -(A7)  * Salva piu' registri nello stack
+
+    * Ripristino multiplo dallo stack
+    MOVEM.L (A7)+, D0-D3/A0-A2  * Ripristina piu' registri dallo stack
+
+    * Ritorno da subroutine (equivalente a POP del PC)
+    RTS   * Ritorna dall'ultima subroutine chiamata
+\end{lstlisting}
+
+Nel codice precedente sono da notare le seguenti notazioni:
+\begin{itemize}
+    \item \textbf{.W}: tale parte del comando permette di capire che sto lavorando con operandi lunghi 16 bit (o 2 Byte) esse sono denotate Word. Nel caso in cui non sia specificato alcun markup, allora la move è da intendersi per soli 8 bit
+    \item \textbf{.L}: tale parte del comando permette di capire che sto lavorando con operandi lunghi 32 bit (o 4 Byte) esse sono denotate Long Word
+    \item \textbf{\#14}: Vado ad identificare un valore immediato tramite il termine \#<valore>, che sarà convertito in binario dal compilatore e poi inserito all'interno del programma, quindi integrato all'interno della zona istruzioni della mia memoria
+\end{itemize}
+
+Come si può notare il comando \lstinline|MOVE| permette di poter utilizzare tutti i tipi di indicizzazione di memoria possibili
+
+\newpage
+
+\subsection{Codici Aritmetici}
+Per il motorola vi sono vari codici aritmetici, che però possono lavorare solo su valori interi e quindi non valori "reali" (o codificati in IEEE 754).
+I codici aritmetici più importanti, ed in generale, più presenti all'interno delle varie architetture sono i seguenti:
+
+\subsubsection{Somma}
+
+\begin{lstlisting}
+    *Operatore di somma
+    ADD #3, D0  *immediato + diretto, D0 = 3+D0
+    ADD.W #3,D0 *somma con specifica grandezza valore D0 = 3+D0
+    ADD.W D0,D1 *indirizzamenti diretti con D1 = D0+D1
+
+    ADDA.L #1,A0 *somma su registri di tipo indirizzo
+
+    ADDQ.W #1,D0 *somma di un valore immediato tra 1 e 8
+\end{lstlisting}
+
+\subsubsection{Sottrazione}
+
+\begin{lstlisting}
+    *Operatore di Sottrazione
+    SUB #3, D0  *immediato + diretto, D0=D0-3
+    SUB.W #3,D0 *sotterazione con specifica grandezza valore D0=D0-3
+    SUB.W D0,D1 *indirizzamenti diretti con D1=D1-D0
+
+    SUBA.L #1,A0 *Sottrazione su registri di tipo indirizzo
+
+    SUBQ.W #1,D0 *Sottrazione di un valore immediato tra 1 e 8
+\end{lstlisting}
+
+\subsubsection{Moltiplicazione}
+
+\begin{lstlisting}
+    MULU #3, D0      * Moltiplicazione senza segno immediato + diretto, D0 = D0 * 3
+    MULU.W #3,D0     * Moltiplicazione senza segno con specifica grandezza valore, D0 = D0 * 3
+    MULU.W D0,D1     * Moltiplicazione senza segno con indirizzamento diretto, D1 = D1 * D0
+
+    MULS.W #3,D0     * Moltiplicazione con segno immediato + diretto, D0 = D0 * 3
+    MULS.W D0,D1     * Moltiplicazione con segno tra registri, D1 = D1 * D0
+\end{lstlisting}
+
+\subsubsection{Divisione}
+
+\begin{lstlisting}
+    DIVU #3, D0      * Divisione senza segno immediato + diretto, D0 = D0 / 3 (quoziente in D0, resto in D1)
+    DIVU.W #3,D0     * Divisione senza segno con specifica grandezza valore, D0 = D0 / 3
+    DIVU.W D0,D1     * Divisione senza segno con indirizzamento diretto, D1 = D1 / D0
+
+    DIVS.W #3,D0     * Divisione con segno immediato + diretto, D0 = D0 / 3
+    DIVS.W D0,D1     * Divisione con segno tra registri, D1 = D1 / D0
+\end{lstlisting}
+
+Come si nota dalle varie implementazioni dei codici aritmetici, questi non possono utilizzare tipologie di indirizzamento indiretto. Pertanto, prima di effettuare le operazioni aritmetiche, gli operandi di input devono essere caricati nei registri interni ed il risultato sarà poi memorizzato in uno dei due registri impiegati (Come visibile nei commenti dei vari comandi).
+
+\subsection{Codici di salto} \label{par:salto}
+
+I codici di salto possono essere di 3 tipologie principali nel motorola 68k:
+\begin{itemize}
+    \item \textbf{Salti condizionati}: Quando viene incontrata l'istruzione di salto, questa effettua il salto (cambiamento del PC) in maniera immediata e senza la verifica di alcuna condizione
+
+    \item \textbf{Salti incondizionati}: I salti condizionati sono effettuati in base al verificarsi di una determinata condizione. Nel caso del motorola 68k la condizione è associata ai valori associati ai singoli bit dello Statur Register (SR)
+
+    \item \textbf{Salti a subrutine}: I salti a subroutine sono delle tipologie particolari di salto incondizionato, con l'unica differenza che l'indirizzo di memoria da cui si è saltati viene prima memorizzato nello stack e poi viene effettuato il salto. Tale operazione fa in modo che una volta eseguita la subroutine, il sistema possa ritornare al punto a cui si era fermato nel programma principale, senza che il programmatore debba gestire direttamente tale condizione
+\end{itemize}
+
+In generale, quando si definisce un codice di salto, bisogna prevedere anche il suo operando, che dal lato del programmatore può essere di principalmente 2 tipi:
+\begin{itemize}
+    \item \textbf{Label}: dopo l'istruzione si fa riferimento ad una label all'interno del programma scritto che permette di evitare di andare a lavorare con indirizzi di memoria diretti (sarà il compilatore a configurarli ad-hoc)
+
+    \item \textbf{Indirizzamento indiretto}: Tramite dei registri indirizzo si indica la locazione di memoria specifica a cui si vuole saltare
+\end{itemize}
+
+\newpage
+\subsubsection{Salti non condizionati}
+I salti non condizionati in motorola possono essere i seguenti:
+\begin{lstlisting}
+    BRA label      * Salto incondizionato alla label specificata (branch always)
+    JMP address    * Salto incondizionato all'indirizzo specificato
+    JMP (A0)       * Salto all'indirizzo contenuto in A0
+\end{lstlisting}
+
+Solitamente nelle varie applicazioni si preferisce utilizzare il comando BRA, poichè più semplice da ricordare in riferimento ai comandi di salto condizionato
+
+\subsubsection{Salti condizionati}
+I salti condizionati hanno una forma più o meno eguale in base a quello che si vuole fare. La loro forma nel caso del 68k è del tipo: Bcc. Dove la B sta per BRANCH mentre "cc" sono le componenti che permettono di distinguere la condizione da considerare rispetto ai valori dello SR.
+I principali comandi sono i seguenti:
+\begin{lstlisting}
+    BCS label      * Salto se Carry e' settato (C = 1)
+    BCC label      * Salto se Carry e' azzerato (C = 0)
+    BVS label      * Salto se Overflow e' settato (V = 1)
+    BVC label      * Salto se Overflow e' azzerato (V = 0)
+    BEQ label      * Salto se Zero e' settato (Z = 1)
+    BNE label      * Salto se Zero e' azzerato (Z = 0)
+    BMI label      * Salto se Negativo e' settato (N = 1)
+    BPL label      * Salto se Positivo e' settato (N = 0)
+
+    BLT label      * Salto se Minore di (N XOR V = 1)
+    BLE label      * Salto se Minore o uguale ((N XOR V) + Z = 1)
+    BGT label      * Salto se Maggiore ((N XOR V) + Z = 0)
+    BGE label      * Salto se Maggiore o uguale (N XOR V = 0)
+
+    BLS label      * Salto se Minore o uguale (C + Z = 1) (senza segno)
+    BHI label      * Salto se Maggiore (C + Z = 0) (senza segno)
+\end{lstlisting}
+
+\newpage
+
+\subsubsection{Salti a subroutine}
+I salti a subroutine sono una tipologia di salto incondizionato. Tali salti fanno parte di architetture CISC principalmente, poichè alcune architetture RISC non prevedono tali funzioni. La presenza di tali funzioni permette di non dover gestire l'indirizzo di ritorno dalla subroutine, o almeno non direttamente dal programmatore. Le istruzioni che in motorola 68k sono principalmente utilizzate per la chiamata a subroutine sono le seguenti:
+\begin{lstlisting}
+    *Salta a una subroutine e salva il ritorno nello stack
+    BSR label
+
+    *Salta a una subroutine con indirizzo specifico o label
+    JSR address/label
+
+    * Ritorna dalla subroutine (estrae l'indirizzo di ritorno dallo stack)
+    RTS
+\end{lstlisting}
+
+\subsection{Codici Logici}
+I codici logici sono operazioni che possono essere effettuate su degli operandi operando bit a bit. Esempi di codici logici sono i seguenti:
+\begin{lstlisting}
+    AND #3, D0      * AND bit a bit con valore immediato, D0 = D0 & 3
+    AND.W D0, D1    * AND tra registri, D1 = D1 & D0
+    AND.L (A0), D0  * AND tra valore in memoria puntato da A0 e D0
+
+    OR #3, D0       * OR bit a bit con valore immediato, D0 = D0 | 3
+    OR.W D0, D1     * OR tra registri, D1 = D1 | D0
+    OR.L (A0), D0   * OR tra valore in memoria puntato da A0 e D0
+
+    EOR #3, D0      * XOR bit a bit con valore immediato, D0 = D0 XOR 3
+    EOR.W D0, D1    * XOR tra registri, D1 = D1 XOR D0
+    EOR.L (A0), D0  * XOR tra valore in memoria puntato da A0 e D0
+
+    NOT D0          * Complemento bit a bit (negazione), D0 = ~D0
+\end{lstlisting}
+
+\newpage
+
+\subsection{Codici di Scorrimento}
+I codici di scorrimento permettono di effettuare delle operazioni di shift, che possono essere comode in alcune tipologie di operazioni
+\begin{lstlisting}
+    ASL #1, D0      * Shift aritmetico a sinistra di 1 bit (mantiene il segno)
+    ASR #1, D0      * Shift aritmetico a destra di 1 bit
+
+    LSL #1, D0      * Shift logico a sinistra di 1 bit (riempie con 0)
+    LSR #1, D0      * Shift logico a destra di 1 bit
+
+    ROL #1, D0      * Rotazione a sinistra di 1 bit (il bit piu' alto rientra da destra)
+    ROR #1, D0      * Rotazione a destra di 1 bit
+
+    ROXL #1, D0     * Rotazione a sinistra con Carry
+    ROXR #1, D0     * Rotazione a destra con Carry
+\end{lstlisting}
+
+\subsection{Codici di Confronto} \label{par:confronto}
+I codici di confronto sono molto importanti, poichè in accoppiata con i salti condizionati permettono di costruire tutti i costrutti fondamentali che possiamo trovare anche nei linguaggi di alto livello
+\begin{lstlisting}
+    CMP #5, D0      * Confronta D0 con 5 (D0 - 5, senza modificare D0, aggiorna i flag)
+    CMP.W D0, D1    * Confronta D1 con D0 (D1 - D0, aggiorna solo i flag)
+    CMP.L (A0), D0  * Confronta D0 con il valore in memoria puntato da A0
+
+    CMPI #10, D0    * Confronto immediato con D0 (D0 - 10, aggiorna solo i flag)
+
+    CMPA.L #1000, A0  * Confronta registro indirizzo A0 con 1000
+\end{lstlisting}
+
+Oltre a semplici comparazioni, solitamente, vi sono anche dei comandi che operano sui singoli registri. Non solo per il controllo di tali registri ma anche per l'effettuazione di eventuali operazioni che possono essere comode per una tipologia di interpretazione ad alto livello del codice
+\begin{lstlisting}
+    TST D0          * Testa D0 (controlla se e' zero o negativo, senza modificarlo)
+    TST.W (A0)      * Testa il valore in memoria puntato da A0
+
+    BTST #3, D0     * Testa il bit 3 di D0 (imposta Z se il bit e' 0)
+    BTST #5, (A0)   * Testa il bit 5 della memoria puntata da A0
+
+    BSET #3, D0     * Imposta il bit 3 di D0 a 1
+    BSET #5, (A0)   * Imposta il bit 5 della memoria puntata da A0
+
+    BCLR #3, D0     * Azzera il bit 3 di D0
+    BCLR #5, (A0)   * Azzera il bit 5 della memoria puntata da A0
+
+    BCHG #3, D0     * Inverte il bit 3 di D0 (0 -> 1, 1 -> 0)
+    BCHG #5, (A0)   * Inverte il bit 5 della memoria puntata da A0
+
+    TAS D0          * Testa e imposta il bit piu' alto (7) di D0
+    TAS (A0)        * Testa e imposta il bit 7 del valore in memoria puntato da A0
+\end{lstlisting}
+
+\subsection{Strutture sintattiche fondamentali}
+Dati i codici di \textbf{Salto} [\ref{par:salto}] e quelli di \textbf{Confronto} [\ref{par:confronto}], si possono costruire quelle che sono le struttura sintattiche fondamentali
+
+\subsubsection{if-then-else}
+Per costruire il ciclo if-then-else bisogna per prima cosa comprendere quale sia la condizione, poichè bisognerà identificare:
+\begin{itemize}
+    \item \textbf{Registro target}: In base a quale registro/operazione devo decretare la condizione?
+    \item \textbf{Condizione}: Qual'è la condizione da rispettare?
+\end{itemize}
+
+Scelti questi due parametri allora sarò capace di capire quale codice cmp utilizzare ed in che modo, e quale tipologia di salto condizionato andare ad effettuare (cerca un uguaglianza a 0, una maggiorazione, una minorazione, cosa sto cercando? quale operazione?)
+
+Esempio di un classico If-then:
+\begin{lstlisting}
+                MOVE.L  D0, D1       * Carica valori nei registri (supponiamo che D0 e D1 abbiano gia' valori)
+                CMP.L   D1, D0       * Confronta D0 con D1 (D0 - D1)
+                BGT     END_IF   * Se D0 > D1, salta al blocco then (condizione = (D1 <= D0))
+THEN:           * Codice interno all'IF
+
+END_IF:         * Codice successivo...
+\end{lstlisting}
+
+Esempio di un If-Then-else
+\begin{lstlisting}
+                MOVE.L  D0, D1       * Carica valori nei registri (supponiamo che D0 e D1 abbiano gia' valori)
+                CMP.L   D1, D0       * Confronta D0 con D1 (D0 - D1)
+                BGT     THEN_BLOCK   * Se D0 > D1, salta al blocco THEN
+
+                * ELSE block
+                MOVE.L  #0, D2       * D2 = 0
+                BRA     END_IF       * Salta oltre il blocco THEN per evitare di eseguirlo
+
+THEN_BLOCK:     MOVE.L  #1, D2       * D2 = 1
+
+END_IF:         * Codice successivo...
+\end{lstlisting}
+
+Come possiamo notare dal codice dell'If-then-else, abbiamo un insieme di salti sia condizionati che non condizionati che sono pilotati da una specifica istruzione di compare
+
+\subsubsection{Ciclo FOR}
+Come per l'if il ciclo for è composto principalmente da codici di \textbf{salto} e da codici di \textbf{confronto}. La struttura è molto simile a quella dell'If-Then-Else con l'eccezzione della posizione dei vari salti.
+Precisamente la struttura di un ciclo for è la seguente:
+\begin{lstlisting}
+                MOVE.L  #0, D0         * Inizializza il contatore D0 = 0
+
+FOR_LOOP:       CMP.L   #10, D0        * Confronta D0 con 10
+                BGE     FOR_END        * Se D0 >= 10, esce dal ciclo
+
+                * Corpo del ciclo
+                NOP                    * Istruzione di esempio (da sostituire con il codice reale)
+
+                ADDQ.L  #1, D0         * Incrementa D0 di 1
+                BRA     FOR_LOOP       * Ripete il ciclo
+
+FOR_END:        * Codice successivo dopo il ciclo
+
+\end{lstlisting}
+
+\subsubsection{Ciclo While}
+
+Il ciclo while segue le regole del ciclo for solo con una condizione differente:
+\begin{lstlisting}
+WHILE_LOOP:     CMP.L   #0, D1        * Confronta D1 con 0
+                BLE     WHILE_END     * Se D1 <= 0, esce dal ciclo
+
+                * Corpo del ciclo
+                NOP                   * Istruzione di esempio
+
+                SUBQ.L  #1, D1        * Decrementa D1 di 1
+                BRA     WHILE_LOOP    * Ripete il ciclo
+
+WHILE_END:     * Codice successivo dopo il ciclo
+\end{lstlisting}
+
+
+\subsubsection{Chiamata a subroutine}
+
+Le chiamate a subroutine possono essere viste come una sorta di chiamate a funzione. Esse, quindi, possono avere sia degli operandi di ingresso che degli operandi di uscita. La "comunicazione" degli operandi con la subroutine può avvenire in due principali modi:
+\begin{itemize}
+    \item \textbf{Con registri interni}: Gli operandi vengono caricati nei registri interni prima di chiamare la subroutine, che poi ci lavorerà sopra. Quindi i registri interni vengono utilizzati come una sorta di comunicazione
+    \item \textbf{Con Stack}: Gli operandi sono locati sullo stack, ciò richiede quindi una gestione anche del puntatore dello stack SP
+\end{itemize}
+
+Un esempio di chiamata a subroutine con memorizzazione degli operandi nello stack è il seguente:
+\begin{lstlisting}
+            MOVE.L  #5, D0        * Carica il primo operando in D0
+            MOVE.L  #10, D1       * Carica il secondo operando in D1
+
+            MOVE.L  D0, -(A7)     * Push del primo operando nello stack
+            MOVE.L  D1, -(A7)     * Push del secondo operando nello stack
+
+            JSR     SUM_SUB       * Chiamata alla subroutine
+
+            MOVE.L  (A7)+, D2     * Il chiamante preleva il risultato dallo stack
+
+            ADDQ.L  #8, A7        * Pulizia dello stack (2 valori da 4 byte)
+
+            * D2 ora contiene il risultato della somma
+
+            * Codice successivo...
+
+SUM_SUB:    MOVE.L  (A7)+, D0     * Pop del primo operando dallo stack
+            MOVE.L  (A7)+, D1     * Pop del secondo operando dallo stack
+
+            ADD.L   D1, D0        * Somma D0 + D1, risultato in D0
+
+            MOVE.L  D0, -(A7)     * Push del risultato nello stack
+
+            RTS                   * Ritorna al chiamante
+\end{lstlisting}
+\newpage
+Esempio di chiamata a subroutine con operandi nello stack e risultato memorizzato nello stack
+\begin{lstlisting}
+            MOVE.L  #5, D0        * Carica il primo operando in D0
+            MOVE.L  #10, D1       * Carica il secondo operando in D1
+
+            MOVE.L  D0, -(A7)     * Push del primo operando nello stack
+            MOVE.L  D1, -(A7)     * Push del secondo operando nello stack
+
+            JSR     SUM_SUB       * Chiamata alla subroutine
+
+            MOVE.L  (A7)+, D2     * Il chiamante preleva il risultato dallo stack
+
+            ADDQ.L  #8, A7        * Pulizia dello stack (2 valori da 4 byte)
+
+            * D2 ora contiene il risultato della somma
+
+            * Codice successivo...
+
+SUM_SUB:    MOVE.L  (A7)+, D0     * Pop del primo operando dallo stack
+            MOVE.L  (A7)+, D1     * Pop del secondo operando dallo stack
+
+            ADD.L   D1, D0        * Somma D0 + D1, risultato in D0
+
+            MOVE.L  D0, -(A7)     * Push del risultato nello stack
+
+            RTS                   * Ritorna al chiamante
+\end{lstlisting}
+
+Caso di utilizzo dei registri interni, sia per passaggio operandi di ingresso che di uscita:
+
+\begin{lstlisting}
+            MOVE.L  #5, D0       * Primo operando in D0
+            MOVE.L  #10, D1      * Secondo operando in D1
+
+            JSR     SUM_REGS     * Chiamata alla subroutine
+
+            * Dopo il ritorno, il risultato e' in D0
+
+            * Codice successivo...
+
+SUM_REGS:   ADD.L   D1, D0       * Somma D0 + D1, risultato in D0
+
+            RTS                  * Ritorna al chiamante
+
+\end{lstlisting}
+
+\subsection{Valutazione degli accessi in memoria}
+Quando utilizzo i comandi precedentemente presentati avrò una quantità diversa di accessi in memoria in base alla composizione che ho dato al mio codice. Gli accessi in memoria dipendono fortemente dalla tipologia di architettura che ho adottato. In generale gli accessi in memoria possono avvenire per 2 tipologie di operazioni: Accesso in memoria Per le Istruzioni (PI) o accesso in memoria Per le Operazioni (PO).
+Veodiamo degli esempi per capire meglio di cosa si sta parlando:
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{Istruzione} & \textbf{PI} & \textbf{PO} \\
+        \hline
+        \lstinline|MOVE.L D0,D1| & 1 & 0 \\
+        \lstinline|MOVE.W D0,D1| & 1 & 0 \\
+        \lstinline|MOVE.L #7,D1| & 3 & 0 \\
+        \lstinline|MOVE.W (A0),(A1)| & 1 & 2 \\
+        \lstinline|MOVE.W (A0),VAR| & 3 & 2 \\
+        \hline
+    \end{tabular}
+    \caption{Conteggio accessi per Architettura a 16 bit e VAR a 32 bit}
+    \label{tab:esempio}
+\end{table}
+
+Per contare gli accessi in memoria bisogna effettuare delle osservazioni in base alla parte che si sta analizzando.
+Per l'accesso \textbf{Per le Istruzioni (PI)} si ragiona sui seguenti accessi:
+\begin{itemize}
+    \item \textbf{Prelievo dell'istruzione}: Un operazione che non mancherà mai sarà sempre il prelievo dell'istruzione, che impone che il mio PI non potrà mai essere nullo
+    \item \textbf{Operandi immediati}: se nel mio comando ho degli operandi immediati, allora dovrò accedere anche altre volte alla memoria per il prelievo di tale operando. I miei accessi, per questo caso, sono dettati dalla lunghezza dell'operando rispetto ai miei bus disponibili. Per esempio, se sono in un architettura a 16 bit devo prelevare un immegiato considerato una WORD, allora il numero di accessi aggiuntivi per prelevare l'immediato è uguale a 1. Mentre se stessi lavorango con le Long World (32 bit), allora il numero di accessi, a parità di architettura, sarà 2
+    \item \textbf{Variabili}: se sto utilizzando delle variabili, che indicano delle locazioni di memoria dirette, allora dovrò fare un numero di accessi alla memoria che mi permette di prelevare gli indirizzi (tali indirizzi sono lunghi tutti 32 bit). Pertanto con un architettura a 16 bit dovrò considerare sempre 2 accessi per ogni variabile per prelevare tali indirizzi
+\end{itemize}
+
+Per l'accesso \textbf{Per gli Operandi (PO)}, i parametri risultano più o meno gli stessi, ad esclusione del prelievo istruzione e della variabile. Le operazioni che si contano per tale processo sono:
+\begin{itemize}
+    \item \textbf{Indirizzamento Indiretto}: quando vado ad effettuare dei riferimenti a dei registri della memoria con indirizzamento indiretto allora devo prevedere un numero di accessi per il prelievo dell'operando. Quindi bisogna conteggiare il numero di accessi per il prelievo dell'operando in base alla sua lunghezza. Nel caso di architettura a 16 bit si avranno: 1 accesso per prelevare delle word (16 bit) e 2 accessi pre prelevare le Long Word (32 bit)
+
+    \item \textbf{Variabili}: Quando si utilizzano le variabili, oltre a prelevare gli indirizzi dalla "zona istruzioni" bisogna prelevare gli operando. La conta del numero di accessi per il prelievo degli operandi è uguale al caso di indirizzamento indiretto
+\end{itemize}
+
+Nel caso degli accessi PO, si è prevista la considerazione per singoli operandi. Quindi in base al numero di operandi presenti, la loro lunghezza prefissata, il loro modo di indirizzamento, si riesce a comprendere (cumulando le specifiche), il numero di accessi che bisogna effettuare in memoria ed il motivo di tali accessi
