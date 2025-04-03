@@ -272,11 +272,11 @@ INT3        MOVE.L  A1,-(A7)		;salvataggio registri che saranno utilizzati
 \section{Debunk esercizi}
 In questo paragrafo verrà commentato il codice diffuso sul canale Teams e presentato a lezione relativo alle esercitazioni sulla PIA (Marzo 2025).
 
-\subsection{Esercizio 1}
+\subsection{Esercizio 1} \label{par:es_1_1}
 Il programma serve a provare una semplice configurazione costituita da due sistemi S1 ed S2 dotati entrambi di un processore M68000, una ROM di 8K (addr \$0-\$1FFF), una RAM di 10K (addr \$8000-\$A7FF) e un device parallelo PIA mappato a \$2004.
 I due PIA sono interconnessi tra loro e mediante un protocollo di handshaking consentono ai due sistemi di scambiarsi un messaggio. In particolare, il sistema S1 trasferisce un vettore di N caratteri verso il sistema S2 sul porto parallelo. Il messaggio si trova in un'area di memoria del sistema S1 e viene salvato in una ulteriore area di memoria nel sistema S2.
 
-\subsubsection{Sistema S1}
+\subsubsection{Sistema S1} \label{par:es_1_1_1}
 Questo driver serve per la programmazione del sistema S1, che effettua il trasferimento con un semplice ciclo. Il sistema resta in \textbf{attesa improduttiva} aspettando che il sistema gemello finisca la lettura. 
 
 \begin{lstlisting}
@@ -353,7 +353,7 @@ All'arrivo dell'interrupt la ISR acquisisce il carattere e lo salva in un'opport
 Nell'area dati si riservano 6 byte per il messaggio che arriverà dal sistema S1, e si carica la dimensione del vettore. Count è un intero la cui utilità verrà chiarita dopo.
 
 \begin{lstlisting}
-    ***********AREA MAIN*********************************	
+    ***AREA MAIN***	
         ORG    $8200
 
     PIADA	EQU    $2004	;indirizzo di PIA-A dato, usato in input
@@ -413,4 +413,88 @@ La ISR a \$8700 è associata all' interrupt di liv. 3  \#vect 27  mappato a \$6C
 
 Come si vede dalla ISR, l'intero COUNT caricato in memoria nell'area dati serve ad accedere alla giusta locazione del vettore in memoria in maniera consistente, senza sovrascrivere i dati precedentemente ricevuti. 
 Il grande problema di questo esercizio è che il dispositivo trasmittente resta in busy wait della avvenuta ricezione del messaggio dal ricevitore. 
+
+\subsection{Esercizio 2}
+Il programma serve a provare una semplice configurazione costituita da due sistemi S1 ed S2 dotati entrambi di un processore M68000, una ROM di 8K (addr \$0-\$1FFF), una RAM di 10K (addr \$8000-\$A7FF) e un device parallelo PIA mappato a \$2004. I due PIA sono interconnessi tra loro e mediante un protocollo di handshaking consentono ai due sistemi di scambiarsi un messaggio. In particolare, il sistema S1 trasferisce un vettore di N caratteri verso il sistema S2 sul porto parallelo. Il messaggio si trova in un'area di memoria del sistema S1 e viene salvato in una ulteriore area di memoria nel sistema S2. Questa volta, anche la trasmissione è gestite tramite interrupt e non tramite polling come nel paragrafo \ref{par:es_1_1}.
+
+\subsubsection{Sistema S1}
+Questo driver serve per la programmazione del sistema S1, che effettua il trasferimento sotto interrupt.
+Per quanto riguarda l'area dati valgono le stesse considerazioni fatte per l'esercizio 1 (\ref{par:es_1_1_1}), con l'aggiunta dell'allocazione di una variabile COUNT anche per il trasmettitore. 
+
+\begin{lstlisting}
+    ***AREA MAIN***
+	ORG    $8200
+
+PIADB	EQU    $2006	;indirizzo di PIA-B dato, usato in output 
+PIACB	EQU    $2007	;indirizzo di PIA-B controllo
+
+MAIN	JSR    DVBOUT	;inizializza PIA porto B in output
+
+	MOVEA.L	#PIACB,A1	;indirizzo registro di controllo CRB
+	MOVEA.L	#PIADB,A2	;indirizzo registro PRB
+	MOVEA.L	#MSG,A0	;indirizzo area messaggio
+
+	MOVE.W	SR,D0	;legge il registro di stato
+	ANDI.W	#$D8FF,D0 ;maschera per reg stato (stato utente, int abilitati)
+	MOVE.W	D0,SR	;pone liv int a 000
+
+* invio primo carattere:	
+INVIO1	MOVE.B	(A2),D1;lettura fittizia da PRB => serve per azzerare CRB7 poiche in generale non sappiamo se la macchina e' in reset
+	    MOVE.B	(A0),(A2)	;dato su bus di PIA porto B: dopo la scrittura di PRB, CB2 si abbassa
+					;cio fa abbassare CA1 sulla porta gemella dell'altro sistema generando 
+					;un'interruzione che coincide con il segnale DATA READY
+
+	    MOVE.B	#1,COUNT
+LOOP  	JMP LOOP	;ciclo caldo dove il processore attende interrupt		
+\end{lstlisting}
+
+Vediamo nel dettaglio la subroutine CVBOUT, ovvero il sottoprogramma reponsabile della configurazione del porto B come porto di output e del protocoloo handshaking.
+
+\begin{lstlisting}
+    DVBOUT	MOVE.B	#0,PIACB		;seleziona il registro direzione di PIA porto B 
+	MOVE.B	#$FF,PIADB	  		;accede a DRB e pone DRA=1 : le linee di B sono linee di output	
+	MOVE.B	#%00100101,PIACB   	;imposta il registro di controllo 
+*								;i bit CRB7 e CRB6 sono a sola lettura	
+	RTS
+\end{lstlisting}
+
+Valgono le stesse considerazioni fatte nel caso dell'esercizio (\ref{par:es_1_1_1}). Questa volta, il byte da scrivere nel registro di controllo è 00100101: b1b0 = 01 significa che le interruzioni vengono propagate al processore tramite il flag CRB7 e che si alza sul fronte di discesa di CA1. Il flag di interruzione CRB7 torna basso in seguito ad un'operazione di lettura su PRB (\textbf{per questo è necessaria la lettura fittizia}); b2=1 signfica che il prossimo accesso ad indirizzo pari sarà sul registro dati PRB; b5b4b3=100 significa protocollo di handshaking e valgono le stesse considerazioni fatte per l'esercizio (\ref{par:es_1_1_1}). 
+
+Procedendo con il main, è necessario inviare dal codice il primo carattere, perchè i successivi verrano gestiti dalla ISR relativa. 
+Vediamola quindi nel dettaglio: La pia-A dell'altro sistema ha appena letto un carattere e scatena l'handshake che genera una interrupt
+su questo sistema: la ISR invia il prossimo carattere prelevandolo dalla memoria se ce ne sono ancora da trsmettere.
+ISR a \$8800 associata all' interrupt di liv. 4  \#vect 28  mappato a \$70 della ROM.
+
+\begin{lstlisting}
+    ORG $8800		
+
+    INT4    	MOVE.L	A1,-(A7)		;salvataggio registri
+        MOVE.L	A0,-(A7)
+        MOVE.L	D0,-(A7)
+        MOVE.L	D1,-(A7)
+        MOVE.L	D2,-(A7)
+    
+        MOVEA.L	#PIADB,A1
+        MOVEA.L	#MSG,A0	;indirizzo area di salvataggio
+        MOVE.B	DIM,D0	;dim del messaggio
+        MOVE.B	COUNT,D1	;contatore corrente degli elementi ricevuti
+    
+        CMP.B	D1,D0
+        BEQ	FINE
+        
+    INVIO	MOVE.B	(A1),D2            ;lettura fittizia da PRB => serve per azzerare CRB7 dopo il primo carattere, altrimenti resta settato con l'ack
+        MOVE.B	(A0,D1),(A1)	;carattere corrente da trasferire in D2;
+    *					;dato su bus di PIA porto B: dopo la scrittura di PRB, CB2 si abbassa
+                    
+        ADD.B	#1,D1			;aggiorno il contatore degli elementi trasmessi
+        MOVE.B	D1,COUNT
+    
+    FINE	MOVE.L  (A7)+,D2		;ripristino registri 
+        MOVE.L  (A7)+,D1
+        MOVE.L  (A7)+,D0	
+        MOVE.L  (A7)+,A0
+        MOVE.L  (A7)+,A1
+        
+        RTE
+\end{lstlisting}
 
