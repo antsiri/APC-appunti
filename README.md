@@ -1,51 +1,58 @@
 ## Istruzioni sull'utilizzo di Git
 Una volta clonata la repo, ed essere acceduti alla cartella di quest'ultima, si possono creare dei branch che permettono di non dover utilizzare necessariamente solo il main principale, e quindi aggiungere delle modifiche solo locali e non globali
 
-### **1. Controllare i branch esistenti**
+### **Per contribuire alla repo**
+#### **Prima di iniziare**
+1. Guardare su github le ISSUE da fare, e nel caso, autoassegnarsela
+2. (se non lo si ha già fatto) Clonare la repo il locale tramite il comando:
 ```bash
+git clone <link-to-repo>
+```
+3. Aggiornare la repo alla sua versione più recente
+4. Controllare se è presente il branch per lo sviluppo della ISSUE e nel caso non fosse presente crearla
+```bash
+# Per visualizzare tutti i repo disponibili
 git branch -a
-```
 
-### **2. Creare e passare al nuovo branch**
+# Per visualizzare i branch remoti
+git branch -r
 
-Quando si crea un nuovo branch cercare di inserire un nome al nuovo branch che permetta di riassumere in maniera concreta quello che si sta andando a modificare o quale zona di appunti si sta andando ad editare principalmente
-```bash
-git checkout -b <zona_appunti_modificata>
-
-# esempio
-
-git checkout -b capitolo1_generalita_68k
-```
-
-Se vuoi basarti su un branch specifico, e quindi espandere un branch già esistente, allora:
-```bash
-git checkout -b <nome_branch> <branch_di_base>
-```
-Tale operazione potrebbe essere comoda quando un gruppetto si occupa di scrivere diverse parti di un singolo capitolo per poi iniziare a fare un piccolo marging nei branch "laterali" prima di validare il lavoro nel branch principale
-
-### **3. Verificare il branch attuale**
-```bash
+# Per visualizzare i branch locali
 git branch
-```
-L'asterisco (`*`) indica il branch attualmente attivo.
 
-### **4. Aggiungere e committare modifiche (facoltativo)**
+# Nel caso non sia presente il branch disponibile crearne uno nel seguente formato
+git checkout -b <numero_issue>_<cosa si sta svolgendo>
+```
+5. Una volta selezionato o creato il branch corretto effettuare tutte le modifiche opportune
+
+#### **Push degli aggiornamenti**
+1. Verificare che si sta lavorando sul branch corretto tramite il comando
 ```bash
-git add .
-git commit -m "Descrizione delle modifiche"
+# Comando per verificare il branch attivo (tramite l'asterisco posto)
+git bash
+
+# Comando per visualizzarlo in maniera diretta
+git branch --show-current
+```
+2. Una volta assicurato che si sta lavorando sul branch corretto effettuare l'add dei file
+```bash
+git add *
+```
+3. Effettuare il commit
+```bash
+git commit -m "breve messaggio #<numero-issue-contributo>
+```
+4. Push del commit
+```bash
+# se non è la prima volta
+git push origin <nome-del-branch>
+
+# se è la prima volta che viene pushato tale branch
+git push --set-upstream origin <nome-del-branch>
 ```
 
-### **5. Pushare il branch su remoto**
-```bash
-git push origin <nome_branch>
-```
-Se è la prima volta che pushi questo branch, imposta l'upstream con:
-```bash
-git push --set-upstream origin <nome_branch>
-```
-
-### **6. Creare una Pull Request (opzionale)**
-Dopo aver pushato il branch, puoi aprire una **Pull Request** su GitHub/GitLab/Bitbucket per richiedere la revisione e fusione del codice.
+#### **Generare la pull request**
+Alla fine del lavoro sul branch si può decidere di poter mergiare tale lavoro. Per fare una richiesta di merging si può andare a fare una pull request tramite github per poi essere confrontata con il branch principale (compatibilità), e nel caso di conflitti, essere risolti manualmente, per poi essere mergiati
 
 #### **Passaggi per creare una Pull Request su GitHub**
 1. Vai sulla pagina della repository su GitHub.
@@ -57,4 +64,8 @@ Dopo aver pushato il branch, puoi aprire una **Pull Request** su GitHub/GitLab/B
 7. Attendi la revisione del codice e, se necessario, risolvi eventuali commenti.
 8. Una volta approvata, puoi effettuare il merge della Pull Request.
 
-
+#### **Comandi utili**
+Annullamento di un commit errato
+```bash
+git reset HEAD~1
+```
