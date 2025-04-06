@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.1.1 Chrome/132.0.6834.210 Electron/34.3.3 Safari/537.36" version="26.1.1" pages="3">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.1.1 Chrome/132.0.6834.210 Electron/34.3.3 Safari/537.36" version="26.1.1" pages="4">
   <diagram name="Flusso di esecuzione" id="DjESVVIIptC1zDyP8yBi">
     <mxGraphModel dx="1434" dy="878" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -259,6 +259,44 @@
         </mxCell>
         <mxCell id="pwFhlk48ebJ7owxva_y--33" value="IR" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcc99;strokeColor=#36393d;" vertex="1" parent="1">
           <mxGeometry x="420" y="370" width="80" height="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="A4XuwA4v1fJX4YNqeUbx" name="Pipeline">
+    <mxGraphModel dx="333" dy="204" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="HR7Qs33yZrdXvPH3JS-1-6" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="280" y="440" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HR7Qs33yZrdXvPH3JS-1-1" value="IF" style="rounded=0;whiteSpace=wrap;html=1;" parent="HR7Qs33yZrdXvPH3JS-1-6" vertex="1">
+          <mxGeometry width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HR7Qs33yZrdXvPH3JS-1-2" value="DEC" style="rounded=0;whiteSpace=wrap;html=1;" parent="HR7Qs33yZrdXvPH3JS-1-6" vertex="1">
+          <mxGeometry x="40" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HR7Qs33yZrdXvPH3JS-1-3" value="EX" style="rounded=0;whiteSpace=wrap;html=1;" parent="HR7Qs33yZrdXvPH3JS-1-6" vertex="1">
+          <mxGeometry x="80" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HR7Qs33yZrdXvPH3JS-1-4" value="MW" style="rounded=0;whiteSpace=wrap;html=1;" parent="HR7Qs33yZrdXvPH3JS-1-6" vertex="1">
+          <mxGeometry x="120" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HR7Qs33yZrdXvPH3JS-1-5" value="RW" style="rounded=0;whiteSpace=wrap;html=1;" parent="HR7Qs33yZrdXvPH3JS-1-6" vertex="1">
+          <mxGeometry x="160" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="nxC-sXuabWFsyN8I5QrQ-1" value="R" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=light-dark(#FF8000,#EDEDED);fontSize=8;" vertex="1" parent="HR7Qs33yZrdXvPH3JS-1-6">
+          <mxGeometry x="36" y="12" width="8" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="nxC-sXuabWFsyN8I5QrQ-2" value="R" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=light-dark(#FF8000,#EDEDED);fontSize=8;" vertex="1" parent="HR7Qs33yZrdXvPH3JS-1-6">
+          <mxGeometry x="76" y="12" width="8" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="nxC-sXuabWFsyN8I5QrQ-3" value="R" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=light-dark(#FF8000,#EDEDED);fontSize=8;" vertex="1" parent="HR7Qs33yZrdXvPH3JS-1-6">
+          <mxGeometry x="116" y="12" width="8" height="16" as="geometry" />
+        </mxCell>
+        <mxCell id="nxC-sXuabWFsyN8I5QrQ-4" value="R" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=light-dark(#FF8000,#EDEDED);fontSize=8;" vertex="1" parent="HR7Qs33yZrdXvPH3JS-1-6">
+          <mxGeometry x="156" y="12" width="8" height="16" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
