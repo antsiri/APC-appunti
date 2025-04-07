@@ -51,5 +51,28 @@ Per migliorare ancora tale tipologia di architettura, allora, si potrebbe pensar
     \includegraphics[width=.5\textwidth]{img/P-M-BUS-M-P.png}
     \caption{Sistema multicore}\label{img:multi-core}
 \end{figure}
+
 I sistemi che sfruttano le gerarchie di memoria prendono il nome di \textbf{sistemi multicore}, che non hanno solo 2 livelli di gerarchia di memoria, ma ne hanno vari, in base ai casi.
+
+\subsection{Multi-Computer e Multi-Processore}
+Concentriamo la nostra attenzione sui sistemi MIMD. Escludendo la possibilità di avere un parallelismo interno, è possibile individuare due categorie di sistemi che permettono a più processori di lavorare su dati diversi, questi sono detti Multi-Computer e Multi-Processore.
+\\
+\\
+Un primo metodo utile a far interagire due (o più) sistemi differenti è introdurre un intermediario, ovvero un particolare tipo di sistema di I/O che sia efficace e veloce. In tal caso, quanto più rapidamente saranno i processori, tanto più dovrà essere il sistema (oltre che la rete che li interconnette). La limitazione principale di tale modello è la sensibilità ai limiti tecnologici dovuto all'interconnessione. Il sistema globale è detto \textbf{Multi-Computer} ed è particolarmente utilizzato per applicazioni che richiedono calcoli dedicati [\ref{fig:multi-computer}].
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{img/multi-processore.png}
+    \caption{Architettura di un sistema Multi-Computer.}
+    \label{fig:multi-computer}
+\end{figure}
+
+Un'altra possibilità per far interagire i processori è direttamente tramite la memoria, ottenendo un sistema complessivo detto \textbf{Multi-Processore} [\ref{fig:multi-processore}]. In tal caso, la comunicazione tra i processori avviene direttamente tramite bus, superando il problema legato alla fisica realizzabilità di connessioni su larga scala. Il vantaggio di questi sistemi è che i dati possono essere trasferiti molto rapidamente in memoria grazie al bus, mentre lo svantaggio è relativo alla competizione tra i processori negli accessi in memoria. Una possibile miglioria all'architettura proposta consiste nell'integrare a ciascun processore una memoria interna più piccola che gli permetta di gestire le istruzioni. In altre parole, è necessario gestire una gerarchia delle memoria. 
+Potremmo (erroneamente) pensare che aggiungere più core permetta di velocizzare il sistema, in realtà questo è sbagliato perché complicherebbe notevolmente le connessioni del bus, il quale diventerebbe il collo di bottiglia del modello.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{img/multi-computer.png}
+    \caption{Architettura di un sistema Multi-Processore.}
+    \label{fig:multi-processore}
+\end{figure}
+L'esistenza di un modello non esclude la possibilità di inserirne un altro, cosa che accade tipicamente nei sistemi moderni.
 
