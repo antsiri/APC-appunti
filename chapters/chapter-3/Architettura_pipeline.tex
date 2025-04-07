@@ -64,4 +64,28 @@ Una delle problematiche che maggiormente incide è quella riguardante il salto, 
 
 \subsection{Architettura del MIPS}
 Il MIPS (Microprocessor without Interlocked Pipelined Stages) è una tipologia di architettura Pipelined di tipo RISC.
-La sua strutturazione è molto particolareggiante dato che comporta la scrittura
+Nel precedente capitolo abbiamo visto le fasi di esecuzione di un'architettura pipelined generale [\ref{img:pipe}], però, nel caso del MIPS, tali fasi variano leggermente. Difatti il MIPS è caratterizzato dalle seguenti fasi:
+\begin{itemize}
+    \item \textbf{Istruction Fetch}: Prelievo dell'istruzione dalla memoria e incremento del program counter
+    \item \textbf{Decode}: SI vanno a prelevare gli operandi dall'istruction file e si preparano i segnali di controllo per la fase di esecuzione
+    \item \textbf{Execute}: Esecuzione delle operazioni logico-aritmetiche pilotate dai segnali della fase di decode precedente
+    \item \textbf{Memory}: Vado a leggere o scrivere qualcosa dalla memoria e gestione dei Salti
+    \item \textbf{Write Back}: Accedo in scrittura al register file per scrivere i risultati ottenuti
+\end{itemize}
+
+Come per tutte le architettura pipelined, anche il MIPS richiede che tra le varie fasi vi siano dei registri che conservino lo stato dell'operazione.
+Il MIPS, pertanto, presenta vari casi di conflitto che richiedono delle ipotesi sul sistema stesso. Tali ipotesi sono:
+\begin{itemize}
+    \item \textbf{Velocità della memoria}: La memoria che sarà utilizzata dal MIPS sarà acceduta molto frequentemente (precisamente 5 volte in più rispetto al caso senza pipe)
+    \item \textbf{Concorrenze sulla memoria}: Presenza di due memorie, una per le istruzioni ed una per i dati. Tali memorie vengono previste per evitare la concorrenza tra la fase di fethc (prelievo dell'istruzione dalla memoria) e la fase di MEM (lettura o scrittura dalla memoria)
+    \item \textbf{Concorrenza sui registri}: Si prevede che la fase di Decode sia eseguita nella seconda parte del ciclo clock, mentre la fase di write back nella prima parte del ciclo di clock. Tale presupposizione viene fatta, per evitare la concorrenza sui registri che interessano l'operazione, e quindi evitare conflitti indesiderati
+\end{itemize}
+
+\subsubsection{Fase di Fetch}
+La fase di fetch è caratterizzata da 2 principali operazioni, la fase di prelievo dell'indirizzo e la fase di incremento del program counter. Pertanto la sua parte architetturale è formata dalle componenti:
+\begin{itemize}
+    \item \textbf{ADD}: Strumento aritmetico per l'incremento del program counter (differente dal componente di ALU)
+    \item \textbf{MUX}: Seleziona se considerare l'indirizzo di memoria successivo del program counter o un registro di memoria dettato dalla fase di MEM
+    \item \textbf{PC}: Registro program counter
+    \item \textbf{Istruction Memory}: Vado a prelevare l'istruzione da eseguire dalla memoria
+\end{itemize}
