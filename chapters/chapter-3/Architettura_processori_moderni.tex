@@ -34,7 +34,22 @@ Un primo approccio è quello di costruire due sistemi "gemelli", ovvero, costrui
 Per sopperire a tale problema, allora si potrebbe pensare di utilizzare un sistema di memoria condivisa tra i due processori, in modo da evitare i dispositivi di I/O. La problematica che si andrebbe a presentare in quest'altro caso sarebbe l'accesso al BUS, che nonostante sia velocissimo, ha bisogno di una buona comunicazione tra i due processori.
 Per migliorare ancora tale tipologia di architettura, allora, si potrebbe pensare di utilizzare una gerarchia di memorie, che permetta di ridurre gli accessi in memoria pilotati dai vari processori, che possono lavorare sulle loro memoria "private" in maniera del tutto autonoma e concorrente senza dover schedulare l'accesso al BUS.
 
-\textcolor{red}{Aggiungere immagini dei vari sistemi}
+\begin{figure}
+    \centering
+    \includegraphics[width=.5\textwidth]{img/P-IO-P.png}
+    \caption{Sistemi "gemelli" o sistema multicomputer}\label{img:multi-computer}
+\end{figure}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=.5\textwidth]{img/P-BUS-P.png}
+    \caption{Sistema a memoria condivisa}\label{img:shared-memory}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.5\textwidth]{img/P-M-BUS-M-P.png}
+    \caption{Sistema multicore}\label{img:multi-core}
+\end{figure}
 I sistemi che sfruttano le gerarchie di memoria prendono il nome di \textbf{sistemi multicore}, che non hanno solo 2 livelli di gerarchia di memoria, ma ne hanno vari, in base ai casi.
 
