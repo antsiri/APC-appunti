@@ -28,7 +28,7 @@ git checkout -b <numero_issue>_<cosa si sta svolgendo>
 #### **Push degli aggiornamenti**
 1. Verificare che si sta lavorando sul branch corretto tramite il comando
 ```bash
-# Comando per verificare il branch attivo (tramite l'asterisco posto)
+# Comando per verificare il branch attivo (tramite l'asterisco posto alla sinistra del branch attivo)
 git bash
 
 # Comando per visualizzarlo in maniera diretta
@@ -40,7 +40,7 @@ git add *
 ```
 3. Effettuare il commit
 ```bash
-git commit -m "breve messaggio #<numero-issue-contributo>
+git commit -m "breve messaggio #<numero-issue-contributo>"
 ```
 4. Push del commit
 ```bash
