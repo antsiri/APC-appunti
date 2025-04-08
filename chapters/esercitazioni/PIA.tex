@@ -670,3 +670,9 @@ L'ultima interruzione è quella che scatena il porto A in seguito alla ricezione
         END	BEGIN
 \end{lstlisting}
 
+\subsection{Considerazioni finali}
+In conclusione, è utile chiarire che le linee di interruzione IRQA e IRQB sono direttamente collegate ai flag CRA7 e CRB7, che si alzano quando c'è una transizione attiva dei segnali CA1/CB1 rispettivamente.
+I flag di interruzione CRA7/CRB7 vengono automaticamente abbassati dopo un'operazione di READ
+sul porto corrispondente, e questo è il motivo per cui nella parte software è necessaria la \textit{lettura fittizia}. 
+Per quanto riguarda i bit del registro di stato/controllo del dispositivo PIA, in questa esercitazione abbiamo visto la configurazione per il protocollo di comunicazione handshaking. Le altre modalità, definite in base ai bit 5,4 e 3 dei registri di controllo,disciplinano il momento in cui CA2/CB2 deve essere rialzato, quindi non cambia nulla
+dal punto di vista delle funzionalità.
