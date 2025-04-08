@@ -89,3 +89,64 @@ La fase di fetch è caratterizzata da 2 principali operazioni, la fase di prelie
     \item \textbf{PC}: Registro program counter
     \item \textbf{Istruction Memory}: Vado a prelevare l'istruzione da eseguire dalla memoria
 \end{itemize}
+
+\subsection{Fase di Decode}
+Nella fase di Decode, il MIPS, va a decodificare ed interpretare il comando. Le parti che compongono l'architettura della fase di decode sono:
+\begin{itemize}
+    \item \textbf{Registers}: Registri interni del processore che possono essere pilotati sia in lettura che in scrittura tramite dei segnali esterni (contenuti nella sotto-architettura)
+    \item \textbf{Sign-extend}: Blocco di estensione con segno dei possibili valori immediati contenuti nell'istruzione
+\end{itemize}
+
+\subsection{Fase di Execute}
+Nella fase Execute viene eseguita effettivamente l'istruzione. La parte architetturale è composta da vari componenti interessanti
+\begin{itemize}
+    \item \textbf{Add}: Strumento che viene utilizzato per calcolare un eventuale offset rispetto ad un valore
+    \item \textbf{Shift left 2}: Vado a moltiplicare per 4 il valore per cui voglio saltare (in modo da saltare a 4 indirizzi più avanti)
+    \item \textbf{ALU}: Strumento di calcolo aritmetico
+    \item \textbf{Multiplexer}: Vedo se devo selezionare il dato immediato o un secondo dato proveniente da un registro
+\end{itemize}
+
+\subsection{Fase di Mem}
+Nella fase di memorizzazione vado ad interagire con la memoria per effettuare o operazioni di lettura o operazioni di scrittura
+La sua architettura è composta principalmente dal singolo elemento di accesso alla memoria dati
+
+\subsection{Fase di Write Back}
+In tale fase vado a verificare cosa bisogna scrivere all'interno dei registri interni. Il componente che meglio indica il suo funzionamento è il multiplexer finale che serve per specificare se il dato da caricare all'interno dei registri sia il risultato dell'ALU o qualche valore proveniente dalla memoria
+
+\subsection{Registri Intermedi}
+I registri che sono posti tra una fase e l'altra della pipeline sono molto più complessi di quel che si crede. Essi non contengono solo dati informativi (operandi e risultati), ma contengono anche: traccia dell'operazione da effetture, destinazione del risultato ecc. 
+L'architettura e le componenti di cui si è parlato sopra, quindi, sono solo una parte di quello che è effettivamente stato realizzato sull'hardware del dispositivo.
+La schematizzazione che abbiamo fatto ci permette di capire bene il funzionamento di un sistema pipeline senza entrare troppo nei dettagli della sua implementazione hardware
+
+\subsection{Gestione dei Salti}
+L'architettura pipeline ha una criticità di cui abbiamo già attentamente discusso in precedenza, i salti.
+Quando sopraggiunge un istruzione di salto, riusciamo a captare che è così solo nella fase di esecuzione dell'istruzione, e quindi, se dovessimo aggiustare il PC seguendo tutta la pipe, dovremmo aspettare la fase di write back. Ma per evitare tale situazione, andiamo a retroazionare la fase di esecuzione con la fase di Istruction Fetch. Tale retroazione permette di capire quando e dove poi si andrà a saltare. Ciò però deve prevedere il sacrificio o l'introduzione di un istruzione "vittima", tale istruzione sarà eseguita indipendentemente a dove si andrà a saltare. Tale istruzione è la no-operation (NOP), che viene inserita subito dopo la JMP per evitare la perdita di eventuali istruzioni utili.
+Tale soluzione è molto buona quando lavoro con il MIPS, poichè questo è caratterizzato dalla sua particolare pipe molto corta (e quindi molto RISC), ma nei processori più moderni, posso avere delle pipe molto più profonde ed articolate. Una soluzione alternativa a quella proposta precedentemente è quella di utilizzare la branch-prediction
+
+\subsubsection{Branch prediction}
+La branch prediction è una tecnica che cerca di prevedere a quale ramo un istruzione di salto condizionato possa saltare. Tale tecnica valuta le prestazioni in base a quanto si possa "perdere" in termini di efficienza (ricaricare il branch corretto rispetto a quello predetto).
+Per capire bene questa cosa andiamo a considerare il seguente pseudocodice:
+\begin{lstlisting}[language=C]
+for (int i = 0; i < N; i++){
+    for (int j = 0; j < N; j++){
+        operazioni
+    }
+}
+\end{lstlisting}
+
+Tali for prevedono un controllo iniziale sulla variabile. Vedendo come sono strutturati tale controllo prevede l'esecuzione del ramo else una sola volta (guardando il for interno) ogni N passi.
+I modi pre prevedere il branch possono essere vari, e possono essere descritti mediante degli appositi automi a stati finiti. Un primo approccio molto basilare è quello di andare a cambiare il branch da caricare successivamente ad ogni errore di decisione e quindi eseguire le operazioni descritte dall'automa [\ref{img:automa-semplice}].
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.5\textwidth]{img/automa-semplice.png}
+    \caption{Automa della branch prediction base}\label{img:automa-semplice}
+\end{figure}
+
+Tale soluzione, però, guardando al nostro caso, non è proprio ottimale, poichè per quel singolo fail che avviene ad ogni N interazioni dovrò assorbirmi 2 fault. Per evitare tale condizione, e quindi rendere la persistenza più forte, vado a costruire un automa a 4 stati che mi permette di rendere la condizione di "cambio del branch" più solida, poichè solo in caso di due fault successivi (fault = errore nel riconoscere il branch giusto), allora cambio il mio branch effettivo. L'automa che meglio spiega tale principio è quello visualizzabille all'immagine [\ref{img:automa-complesso}]
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.5\textwidth]{img/automa-complesso.png}
+    \caption{Automa della branch prediction avanzato}\label{img:automa-complesso}
+\end{figure}
