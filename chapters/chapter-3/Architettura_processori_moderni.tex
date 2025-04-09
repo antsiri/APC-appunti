@@ -1,14 +1,14 @@
 \newpage
 \section{Architettura dei Processori moderni}
-La classica architettura di un processore, sull'esecuzione delle istruzioni, è poco efficiente, poichè bisogna aspettare sempre il termine di un istruzione per eseguire quella successiva.
+La classica architettura di un processore, riguardo l'esecuzione delle istruzioni, è poco efficiente, poichè bisogna aspettare sempre il termine di un istruzione per eseguire quella successiva.
 Per velocizzare tale tipologia di sistema abbiamo 2 principali strade:
 \begin{itemize}
-    \item \textbf{Elettronicamente}: Quindi andiamo ad aumentare la frequenza di clock all'interno del nostro sistema (in gergo si utilizza il termine Overcloccare). Tale soluzione, per quanto semplice, è molto pericolosa, poichè dopo una certa soglia, non posso più aumentare la frequenza di clock. Aumentare troppo il clock potrebbe far danneggiare i componenti per la troppa energia da dissipare e quindi bisognerebbe prevedere anche delle architetture costruite ad-hoc
+    \item \textbf{Elettronicamente}:Si aumenta la frequenza di clock all'interno del nostro sistema (in gergo si utilizza il termine Overclock). Tale soluzione, per quanto semplice, è molto pericolosa, poichè dopo una certa soglia, non posso più aumentare la frequenza di clock. Aumentare troppo il clock potrebbe far danneggiare i componenti per la troppa energia da dissipare e quindi bisognerebbe prevedere anche delle architetture costruite ad-hoc;
     
     \item \textbf{Architetturalmente}: Vado a modificare l'architettura per gestire un nuovo modo di funzionamento del classico flusso di funzionamento di un processore. Tale modifica permetterebbe di poter eseguire più istruzioni contemporaneamente. Le tipologie di approcci che si possono avere in base a questa soluzione sono 2:
     \begin{itemize}
-        \item \textbf{Parallelismo livello di Processo}: Ho a disposizione più processori (parallelismo esplicito) che vanno ad eseguire in maniera concorrente tali processi
-        \item \textbf{Parallalismo livello istruzione}: Un singolo processore riesce ad eseguire più istruzioni in maniera parallela
+        \item \textbf{Parallelismo livello di Processo}: Ho a disposizione più processori (parallelismo esplicito) che vanno ad eseguire in maniera concorrente tali processi;
+        \item \textbf{Parallalismo livello istruzione}: Un singolo processore riesce ad eseguire più istruzioni in maniera parallela;
     \end{itemize}
 \end{itemize}
 
@@ -16,17 +16,17 @@ Le due macrosoluzioni non sono mutuamente esclusive, quindi si potrebbe anche pe
 Guardando nello specifico alla soluzione di tipo \textbf{Architetturale} si possono incontrare varie strade per poter implementare il parallelismo delle istruzioni.
 Per poter meglio comprendere come effettuare la suddivisione del lavoro tramite le varie architetture, bisogna comprendere bene come strutturare un \textbf{Processo}. Tale entità la possiamo vedere come:
 \begin{itemize}
-    \item Formata da più task disgiunti ed indipendenti
-    \item Formata da un solo programma che richiede un'esecuzione ad elevate prestazioni
+    \item Formata da più task disgiunti ed indipendenti;
+    \item Formata da un solo programma che richiede un'esecuzione ad elevate prestazioni.
 \end{itemize}
 
 Le architetture che negli anni sono state progettate per la distribuzione del carico di lavoro, dato da un singolo processo sono varie (quindi ci troviamo nel secondo caso).
 Le tipologie principali sono:
 \begin{itemize}
     \item \textbf{SISD (Single Istruction Single Data)}: Architettura in grado di eseguire una istruzione alla volta lavorando su dati singoli. Tale tipologia di architettura rispetta per filo e per segno la classica architettura di Von Neumann, la tipologia di parallelismo che si può implementare su tali sistemi è solo tramite un cambio di contesto, quindi definendo uno scheduling.
-    \item \textbf{SIMD (Single Istruction Multiple Data)}: Architettura progettata per l'esecuzione di una singola istruzione su più dati. Tale tipologia di architettura è molto buona per l'esecuzione di prodotti vettoriali. Il parallelismo di tale macchina è intrinseco rispetto ai dati, poichè si agisce effettuando una singola istruzione sui vari dati
-    \item \textbf{MISD (Multiple Istruction Single Data)}: (Tali architetture sono state aggiunte solo per conoscenza personale, ma non sono state spiegate dal professore) Architettura in grado di eseguire una moltitudine di istruzioni su di un singolo dato. Tale tipologia di architettura è la meno utilizzata, poichè si cerca di eseguire sempre delle operazioni contemporanee rispetto ai dati
-    \item \textbf{MIMD (Multiple Istruction Multiple Data)}: Architettura che consente di eseguire più istruzioni su più dati. Essi eseguono quindi in parallelo, più istruzioni diverse su più dati diversi. Esse sono le più complicate per via della condivisione della memoria, difatti, ve ne sono varie, in base a come si vadano ad accedere i vari dati in memoria
+    \item \textbf{SIMD (Single Istruction Multiple Data)}: Architettura progettata per l'esecuzione di una singola istruzione su più dati. Tale tipologia di architettura è molto buona per l'esecuzione di prodotti vettoriali. Il parallelismo di tale macchina è intrinseco rispetto ai dati, poichè si agisce effettuando una singola istruzione sui vari dati.
+    \item \textbf{MISD (Multiple Istruction Single Data)}: (Tali architetture sono state aggiunte solo per conoscenza personale, ma non sono state spiegate dal professore) Architettura in grado di eseguire una moltitudine di istruzioni su di un singolo dato. Tale tipologia di architettura è la meno utilizzata, poichè si cerca di eseguire sempre delle operazioni contemporanee rispetto ai dati.
+    \item \textbf{MIMD (Multiple Istruction Multiple Data)}: Architettura che consente di eseguire più istruzioni su più dati. Essi eseguono quindi in parallelo, più istruzioni diverse su più dati diversi. Esse sono le più complicate per via della condivisione della memoria, difatti, ve ne sono varie, in base a come si vadano ad accedere i vari dati in memoria.
 \end{itemize}
 
 Nel nostro caso, il Motorola 68k è una tipologia di sistema \textbf{SISD}.
@@ -59,8 +59,8 @@ I sistemi che sfruttano le gerarchie di memoria prendono il nome di \textbf{sist
 \subsection{Multi-Computer e Multi-Processore}
 Concentriamo la nostra attenzione sui sistemi MIMD. Escludendo la possibilità di avere un parallelismo interno, è possibile individuare due categorie di sistemi che permettono a più processori di lavorare su dati diversi, questi sono detti Multi-Computer e Multi-Processore.
 \\
-Un primo metodo utile a far interagire due (o più) sistemi differenti è introdurre un intermediario, ovvero un particolare tipo di sistema di I/O che sia efficace e veloce. In tal caso, quanto più rapidamente saranno i processori, tanto più dovrà essere il sistema (oltre che la rete che li interconnette). La limitazione principale di tale modello è la sensibilità ai limiti tecnologici dovuti all'interconnessione. Il sistema globale è detto \textbf{Multi-Computer} ed è particolarmente utilizzato per applicazioni che richiedono calcoli dedicati [\ref{fig:multi-computer}].
-\begin{figure}[!h]
+Un primo metodo utile a far interagire due (o più) sistemi differenti è introdurre un intermediario, ovvero un particolare tipo di sistema di I/O che sia efficace e veloce. In tal caso, quanto più rapidi saranno i processori, tanto più dovrà esserlo il sistema (oltre che la rete che li interconnette). La limitazione principale di tale modello è la sensibilità ai limiti tecnologici dovuti all'interconnessione. Il sistema globale è detto \textbf{Multi-Computer} ed è particolarmente utilizzato per applicazioni che richiedono calcoli dedicati [\ref{fig:multi-computer}].
+\begin{figure}[!ht]
     \centering
     \includegraphics[width=0.8\linewidth]{img/multi-processore.png}
     \caption{Architettura di un sistema Multi-Computer.}
@@ -69,7 +69,7 @@ Un primo metodo utile a far interagire due (o più) sistemi differenti è introd
 
 Un'altra possibilità per far interagire i processori è direttamente tramite la memoria, ottenendo un sistema complessivo detto \textbf{Multi-Processore} [\ref{fig:multi-processore}]. In tal caso, la comunicazione tra i processori avviene direttamente tramite bus, superando il problema legato alla fisica realizzabilità di connessioni su larga scala. Il vantaggio di questi sistemi è che i dati possono essere trasferiti molto rapidamente in memoria grazie al bus, mentre lo svantaggio è relativo alla competizione tra i processori negli accessi in memoria. Una possibile miglioria all'architettura proposta consiste nell'integrare a ciascun processore una memoria interna più piccola che gli permetta di gestire le istruzioni. In altre parole, è necessario gestire una gerarchia delle memoria. 
 Potremmo (erroneamente) pensare che aggiungere più core permetta di velocizzare il sistema, in realtà questo è sbagliato perché complicherebbe notevolmente le connessioni del bus, il quale diventerebbe il collo di bottiglia del modello.
-\begin{figure}[!h]
+\begin{figure}[!ht]
     \centering
     \includegraphics[width=0.5\linewidth]{img/multi-computer.png}
     \caption{Architettura di un sistema Multi-Processore.}
