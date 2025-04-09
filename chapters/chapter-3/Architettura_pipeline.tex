@@ -150,3 +150,113 @@ Tale soluzione, però, guardando al nostro caso, non è proprio ottimale, poich�
     \includegraphics[width=.5\textwidth]{img/automa-complesso.png}
     \caption{Automa della branch prediction avanzato}\label{img:automa-complesso}
 \end{figure}
+
+\section{Architetture Superscalari}
+L'utilizzo delle pipe porta dei vantaggi non in termini di attraversamento di una istruzione, che rimane invariato, ma in termini di produttività. Per ottenere prestazioni ancora migliori, è possibile realizzare un'architettura con più pipe che eseguono diverse istruzioni in parallelo, così da aumentare la produttività del sistema. Una tale architettura viene chiamata \textbf{Superscalare}. Tuttavia, questa introduce delle problematiche che vanno necessariamente risolte, queste sono:
+\begin{enumerate}
+    \item Le pipe devono condividere un unico accesso in memoria comune per il prelievo delle istruzioni. In altre parole, anche in presenza di più pipe tutte devono leggere dalla stessa memoria. Questo può creare un collo di bottiglia, perché solo una pipeline alla volta può leggere da lì.
+    \item Se le pipe non sono del tutto indipendenti ma condividono delle stazioni, nascono dei problemi di conflitto nell'utilizzo delle unità funzionali condivise. Se due pipeline vogliono usare la stessa unità (ad esempio, la ALU) allo stesso momento, nasce un collisione e una delle due deve aspettare. Questo riduce l'efficienza.
+\end{enumerate}
+
+\subsection{Gestione delle Collisioni}
+La \textbf{gestione delle collisioni} nella architetture superscalari avviene completamente in hardware. Per comprendere al meglio come un processore con una tale architettura gestisca il problema, introduciamo un esempio. Supponiamo che la CPU sia in grado di realizzare addizione e moltiplicazione in floating point. Come possiamo immaginare, alcune delle operazioni presenti nell'addizione potrebbero essere richieste anche dalla moltiplicazione (e viceversa), mappiamo dunque all'interno di una tabella le diverse operazioni necessarie a completare le due [\ref{tab:mul} e \ref{tab:add}].
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|l|c|c|c|c|c|c|c|}
+\hline
+         & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\
+\hline
+Ex Add   & X &   &   &   &   &   &   \\
+\hline
+Mult     &   & X & X &   &   &   &   \\
+\hline
+Man Add  &   &   & X & X &   &   &   \\
+\hline
+Renorm   &   &   &   &   & X &   & X \\
+\hline
+Round    &   &   &   &   &   & X &   \\
+\hline
+Shift A  &   &   &   &   &   &   &   \\
+\hline
+Lead 1   &   &   &   &   &   &   &   \\
+\hline
+Shift B  &   &   &   &   &   &   &   \\
+\hline
+\end{tabular}
+\caption{7 stadi richiesti dalla moltiplicazione.}
+\label{tab:mul}
+\end{table}
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}
+\hline
+         & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 \\
+\hline
+Ex Add   & X &   &   &   &   &   &   &   &   \\
+\hline
+Mult     &   &   &   &   &   &   &   &   &   \\
+\hline
+Man Add  &   &   &   & X &   &   &   &   &   \\
+\hline
+Renorm   &   &   &   &   &   &   &   &   & X \\
+\hline
+Round    &   &   &   &   &   &   &   & X &   \\
+\hline
+Shift A  &   & X & X &   &   &   &   &   &   \\
+\hline
+Lead 1   &   &   &   &   & X &   &   &   &   \\
+\hline
+Shift B  &   &   &   &   &   & X & X &   &   \\
+\hline
+\end{tabular}
+\caption{9 stadi richiesti dall'addizione.}
+\label{tab:add}
+\end{table}
+
+L'introduzione di tali tabelle semplifica notevolmente la scrittura del \textbf{vettore delle collisioni}, ovvero un particolare vettore binario utilizzato dal compilatore per gestire il problema dei conflitti tra pipe. Poniamoci nell'ipotesi semplificativa di due sole pipe, in modo da visualizzare pù facilmente il processo. Per ricavare il vettore, è sufficiente sovrapporre le tabelle delle operazioni che vogliamo eseguire, opportunamente shiftate a seconda di quale delle due sia eseguita prima. Ad esempio, se vogliamo eseguire una moltiplicazione X e al ciclo di clock successivo un'altra moltiplicazione Y, la sovrapposizione delle tabelle fornisce il seguente risultato [\ref{tab:collision}].
+
+\begin{table}[!h]
+\centering
+\begin{tabular}{|l|c|c|c|c|c|c|c|}
+\hline
+         & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\
+\hline
+Ex Add   & X & Y &   &   &   &   &   \\
+\hline
+Mult     &   & X & XY & Y &   &   &   \\
+\hline
+Man Add  &   &   & X & XY & Y &   &   \\
+\hline
+Renorm   &   &   &   &   & X & Y & X \\
+\hline
+Round    &   &   &   &   &   & X & Y \\
+\hline
+Shift A  &   &   &   &   &   &   &   \\
+\hline
+Lead 1   &   &   &   &   &   &   &   \\
+\hline
+Shift B  &   &   &   &   &   &   &   \\
+\hline
+\end{tabular}
+\caption{Collisioni tra due moltiplicazioni sfasate di 1 ciclo di clock.}
+\label{tab:collision}
+\end{table}
+La tabella evidenzia come le due operazioni, eseguite secondo la tempificazione descritta, presentano delle collisioni al tempo 3 e 4 (presenza contemporanea di X e Y). Il corrispondente vettore delle collisioni sarà dunque 0011000. \MakeUppercase{è} fondamentale ribadire che il vettore si limita solamente a segnalare la presenza di una collisione (1 nella stringa), ma ciò non ha niente a che vedere con le fasi della pipeline. In altre parole, se nella stringa c'è un 1 nella terza posizione, questo NON significa che la collisione riguarda la terza fase.
+\\
+\\
+\MakeUppercase{è} da notare come in tal caso non valga la proprietà commutativa, realizzando infatti prima una moltiplicazione e poi un'addizione non ci sarebbe alcune collisione. Nel nostro esempio ci siamo fermati a realizzare il collision vector per 1 solo caso, ovvero quello in cui una moltiplicazione segue una moltiplicazione. In generale, è necessario costruirlo per tutte le possibili combinazioni di operazioni (\textit{mul} segue \textit{add}, \textit{add} segue \textit{add}, eccetera). Se per ipotesi avessimo \(n\) istruzioni da realizzare, sarebbe necessario costruire \(2^n\) vettori, complicando notevolmente il lavoro del compilatore.
+\\
+\\
+Ritorniamo all'esempio e cerchiamo di capire come il compilatore gestisca le collisioni per una generica sequenza di operazioni, che supponiamo essere: \textit{add, mul, mul}. \MakeUppercase{è} innanzitutto necessario costruire il vettore di collisione per le operazioni \textit{add-mul} e \textit{mul-mul}. A questo punto, bisogna inserire la seconda moltiplicazione tenendo conto sia della moltiplicazione precedente che della prima addizione. Tale condizione viene completamente gestita in hardware, secondo una struttura fatta nel seguente modo [\ref{fig:hardware-coll}].
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.7\linewidth]{img/superscalari_collisioni.png}
+    \caption{Hardware per la gestione delle collisioni.}
+    \label{fig:hardware-coll}
+\end{figure}
+In particolare, il registro a scorrimento fa proseguire la "storia" delle istruzioni, mentre la OR "unisce" la storia precedente con la nuova. Quindi, la OR garantisce che non ci sia collisione né con l'istruzione che stiamo aggiungendo, né con la storia di istruzioni precedenti. \MakeUppercase{è} fondamentale notare come la struttura sia suddivisa in due parti, quella superiore che riguarda soltanto la moltiplicazione, e quella inferiore che invece riguarda l'addizione.
+\\
+\\
+Un tale tipo di soluzione hardware per la gestione delle collisioni è tipica dei sistemi \textbf{DSP} (Digital Signal Processor), come quelli usati per audio, video, telecomunicazioni. In particolare, il suo utilizzo permette di schedulare le istruzioni nel modo più efficiente possibile evitando stalli o rallentamenti.
