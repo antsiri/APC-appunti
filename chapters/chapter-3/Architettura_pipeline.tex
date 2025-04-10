@@ -151,6 +151,24 @@ Tale soluzione, però, guardando al nostro caso, non è proprio ottimale, poich�
     \caption{Automa della branch prediction avanzato}\label{img:automa-complesso}
 \end{figure}
 
+Per implementare la predizione a livello hardware, il processore utilizza una \textbf{tabella di predizione} dei salti. Una possibile struttura è la seguente.
+\begin{itemize}
+    \item Indirizzo dell'istruzione di salto.
+    \item Indirizzo di destinazione (dove saltare).
+    \item 2 Bit per codificare lo stato dell'automa.
+\end{itemize}
+
+La tabella viene aggiornata in parallelo durante la fase di Execute (EX), ovvero nel momento in cui il processore verifica se la predizione è corretta. Se c'è stato un errore, si aggiorna lo stato dell'automa (e la corrispondente voce nella tabella). Tale struttura è memorizzata in un apposita area di memoria, detta \textbf{Branch History Table} (BHT).
+\\
+\\
+Cerchiamo di capire come sia possibile realizzare una memoria dalle caratteristiche descritte in precedenza. Osserviamo innanzitutto che un tale funzionamento non può essere ottenuto da un classico schema di MUX e DEMUX, in quanto l'ingresso della memoria sarà una chiave (indirizzo 100) e l'uscita sarà un valore (indirizzo 104 o 104). Per cui, la memoria si compone di una serie di chiavi, a ognuna delle quali viene associata un'informazione. \MakeUppercase{è} inoltre presente un comparatore legato a ciascuna chiave, che restituisce un valore alto se questa coincide con il valore della chiave fornito in ingresso. Tutte le informazioni memorizzate sono collegate a un MUX, che viene pilotato dalle uscite dei comparatori. Una tale tipologia di memoria è detta \textbf{associativa} [\ref{fig:mem_associativa}], e differisce dalle classiche memorie indirizzabili quali, RAM o hard disk.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=0.5\linewidth]{img/mem_associativa.png}
+    \caption{Architettura di una memoria associativa.}
+    \label{fig:mem_associativa}
+\end{figure}
+
 \section{Architetture Superscalari}
 L'utilizzo delle pipe porta dei vantaggi non in termini di attraversamento di una istruzione, che rimane invariato, ma in termini di produttività. Per ottenere prestazioni ancora migliori, è possibile realizzare un'architettura con più pipe che eseguono diverse istruzioni in parallelo, così da aumentare la produttività del sistema. Una tale architettura viene chiamata \textbf{Superscalare}. Tuttavia, questa introduce delle problematiche che vanno necessariamente risolte, queste sono:
 \begin{enumerate}
