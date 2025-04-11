@@ -16,22 +16,33 @@ Per comprendere meglio cosa si intende per esecuzione parallela di più istruzio
     \caption{Architettura classica pipeline (ordine di esecuzione fasi)}\label{img:pipe}
 \end{figure}
 
-Definito il flusso di esecuzione di un' istruzione, l'architettura pipeline cerca di eseguire le fasi di un' istruzione in maniera del tutto separata, in modo da poter eseguire più fasi di istruzioni differenti. Per capire meglio questo concetto facciamo un esempio:
+Definito il flusso di esecuzione di un' istruzione, l'architettura pipeline cerca di eseguire le fasi di un' istruzione in maniera del tutto separata, in modo da poter eseguire più fasi di istruzioni differenti, aumentando il throughput di 5 volte rispetto alla classica architettura sequenziale di Von Neumann. Per capire meglio questo concetto facciamo un esempio:
 Devo eseguire un programma che ha 5 istruzioni, allora parto con l'esecuzione della prima fase, che preleverà l'istruzione i1, una volta prelevata, l'istruzione i1 passa alla fase di decode, mente, allo stesso istante, viene caricata l'istruzione i2 (quindi viene effettuata la Istruction Fetch dell'istruzione successiva mentre viene decodificata la precedente). Se eseguiamo tale procedura per tutte le fasi noteremo che ad ogni impulso di clock (a regime), il processore darà un risultato, quindi non ci sarà bisogno di eseguire tutte le istruzioni una per volta, poichè la suddivisione delle fasi ne permette un' esecuzione "parallela" (o meglio dire pipeline).
 
 Per fare in modo di isolare l'esecuzione delle varie fasi, tra i vari blocchetti saranno presenti dei registri, che permettono di conservare lo stato su cui una determinata fase sta lavorando (come le architetture pipeline in elettronica [\ref{img:pipe-reg}]). 
 
-\begin{figure}
+\begin{figure}[!ht]
     \centering
     \includegraphics[width=.5\textwidth]{img/Pipe-reg.png}
     \caption{Architettura classica pipeline con registri}\label{img:pipe-reg}
 \end{figure}
 
+Esistono tuttavia dei limiti dell'architettura pipeline la cui risoluzione verrà discussa (almeno per quelli che ci riguardano) nei prossimi paragrafi:
+
+\begin{itemize}
+    \item \textbf{Vincolo di tempo}: Le fasi presentate operano in pipe, quindi funzionano bene se tutte le unità funzionali impiegano un tempo più o meno costante. Se così non fosse, l'intero processore sarà rallentato dall'unità funzionale più lenta. La condizione di tempo di risposta costante è garantita solo se le istruzioni sono particolarmente semplici (condizione tipica dei sistemi RISC);
+    \item \textbf{Vincolo tecnologico}: Tutte le unità funzionali sono pilotate contemporaneamente dallo stesso clock. Il problema tecnologico è che il clock può essere schematizzato elettronicamente come un circuito induttivo/capacitivo, e di conseguenza le ultime unità a percepire il segnale di clock, se la frequenza del treno di impulsi è troppo elevata, troppo \textit{filtrato} (a causa del filtro capacitivo) o troppo rumoroso (a causa dell'effetto induttivo). Questo fenomeno prende il nome di Skew del segnale di clock, e dunque è opportuno adottare delle misure di ridondanza e controllo correttezza a monte di ogni collegamento unità funzionale-clock;
+    \item \textbf{Problema delle istruzioni di salto}: Quando si incontra un'istruzione di salto, bisogna eseguirla completamente (fine fase EX), prima di sapere se il salto deve essere effettuato o meno e prima di conoscere l'indirizzo della prossima istruzione da prelevare. La filosofia generale è quella di non fermare la pipe, e quindi continuare a caricare istruzioni in modo sequenziale, e all'occorrenza eliminarle dalla pipe (\textit{branch penalty}) (\ref{par:MIPS_gestione_salti});
+    \item \textbf{Problema del conflitto sui dati}: Spesso accade che due istruzioni consecutive cercano di leggere e scrivere contemporaneamente lo stesso registro e ciò potrebbe causare gravi errori. Nei processori CISC i conflitti sui dati sono più probabili, siccome quest’ultimi tendono a garantire tutti i modi di indirizzamento per tutte le istruzioni. Il conflitto sui dati è confinato alle ultime tre fasi: EX, MEM e WB;
+    \item \textbf{Problema della gestione delle interruzioni}: In un sistema pipeline è più complesso gesite sia le interruzioni esterne che garantire il corretto ordine di esecuzione delle interruzioni interne;
+    \item \textbf{Problema dei conflitti per l'accesso in memoria}: Più fasi possono tentare di accedere contemporaneamente alla memoria, per eseguire operazioni di lettura delle istruzioni o scrittura sui dati. 
+\end{itemize}
+
 Un'architettura di questo tipo, però, richiede una serie di ipotesi, ovvero:
 \begin{itemize}
-    \item Divisione di parte dati e parte istruzioni (altrimenti dovrei gestire anche dei conflitti tra l'istruction fetch e la register/memory write);
-    \item Le memorie devono avere degli accessi molto veloci: ad ogni colpo di clock viene prelevata un'istruzione e potenzialmente scritto un risultato.
-    \item Le operazioni artimetico-logiche devono essere effettuate prevalentemente tra i registri interni del processore;
+    \item Divisione di memoria dati e memoria istruzioni (altrimenti dovrei gestire anche dei conflitti tra l'istruction fetch e la register/memory write);
+    \item Le memorie devono garantire degli accessi molto veloci: ad ogni colpo di clock vengono effettuate 5 fasi e potenzialmente scritto un risultato.
+    \item Le operazioni artimetico-logiche devono essere effettuate prevalentemente tra i registri interni del processore, condizione che caratterizza fortemente i processori RISC;
     \item Le istruzioni devono avere tutte lunghezza fissa;
 \end{itemize}
 
@@ -67,61 +78,91 @@ Il MIPS (Microprocessor without Interlocked Pipelined Stages) è una tipologia d
 Nel precedente capitolo abbiamo visto le fasi di esecuzione di un'architettura pipelined generale [\ref{img:pipe}], però, nel caso del MIPS, tali fasi variano leggermente. Difatti il MIPS è caratterizzato dalle seguenti fasi:
 \begin{itemize}
     \item \textbf{Istruction Fetch}: Prelievo dell'istruzione dalla memoria e incremento del program counter;
-    \item \textbf{Decode}: Si vanno a prelevare gli operandi dall'istruction file e si preparano i segnali di controllo per la fase di esecuzione;
+    \item \textbf{Decode}: Si vanno a prelevare gli operandi dal \textit{register file} e si preparano i segnali di controllo per la fase di esecuzione. Il register file è una componente fondamentale all'interno di un processore. Si tratta di un insieme organizzato di registri che servono per archiviare temporaneamente dati e istruzioni durante l'esecuzione dei programmi. Supporta operazioni di lettura e scrittura simultanee, infatti il processore può leggere/scrivere da/verso più registri nello stesso ciclo di clock;
     \item \textbf{Execute}: Esecuzione delle operazioni logico-aritmetiche pilotate dai segnali della fase di decode precedente;
-    \item \textbf{Memory}: Vado a leggere o scrivere qualcosa dalla memoria e gestione dei Salti;
-    \item \textbf{Write Back}: Accedo in scrittura al register file per scrivere i risultati ottenuti;
+    \item \textbf{Memory}: Vado a leggere o scrivere qualcosa dalla memoria e gestione dei salti;
+    \item \textbf{Write Back}: Accesso in scrittura al register file per scrivere i risultati ottenuti;
 \end{itemize}
+
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.25\textwidth]{img/MIPS_clock_split.png}
+    \caption{Divisone temporale impulso di clock}
+    \label{img:MIPS_divisione_clock}
+\end{figure}
 
 Come per tutte le architettura pipelined, anche il MIPS richiede che tra le varie fasi vi siano dei registri che conservino lo stato dell'operazione.
 Il MIPS, pertanto, presenta vari casi di conflitto che richiedono delle ipotesi sul sistema stesso. Tali ipotesi sono:
+
 \begin{itemize}
     \item \textbf{Velocità della memoria}: La memoria che sarà utilizzata dal MIPS sarà acceduta molto frequentemente (precisamente 5 volte in più rispetto al caso senza pipe);
     \item \textbf{Concorrenze sulla memoria}: Presenza di due memorie, una per le istruzioni ed una per i dati. Tali memorie vengono previste per evitare la concorrenza tra la fase di fetch (prelievo dell'istruzione dalla memoria) e la fase di MEM (lettura o scrittura dalla memoria);
-    \item \textbf{Concorrenza sui registri}: Si prevede che la fase di Decode sia eseguita nella seconda parte del ciclo clock, mentre la fase di write back nella prima parte del ciclo di clock. Tale presupposizione viene fatta, per evitare la concorrenza sui registri che interessano l'operazione, e quindi evitare conflitti indesiderati.
+    \item \textbf{Concorrenza sui registri}: Potenzialmente sul register file possono verificarsi dei conflitti, in particolare quando contemporaneamente un'istruzione vi accede in lettura e una in scrittura. Per risolvere il conflitto, le operazioni di lettura e scrittura vengono effettuate in due intervalli separati dello stesso ciclo di clock, e in particolare la fase di decode (lettura) opera nella seconda parte del ciclo di clock, mentre la fase di write back (scrittura) opera nella prima parte, come riportato in figura \ref{img:MIPS_divisione_clock};
 \end{itemize}
 
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.75\textwidth]{img/MIPS_architettura_pipeline.png}
+    \caption{Architettura della pipeline MIPS}
+    \label{img:MIPS_architettura_pipeline}
+\end{figure}
+
 \subsubsection{Fase di Fetch}
-La fase di fetch è caratterizzata da 2 principali operazioni, la fase di prelievo dell'indirizzo e la fase di incremento del program counter. Pertanto la sua parte architetturale è formata dalle componenti:
+La fase di fetch è caratterizzata da 2 principali operazioni, la fase di prelievo dell'indirizzo e la fase di incremento del program counter. 
+L'istruzione viene letta dalla Instruction memory, indirizzata al PC e posta nel registro di comunicazione tra fase IF e fase ID. Dopodichè, il PC viene incrementato e copiato nel registro di comunicazione, perchè potrebbe, nel caso di istruzioni di salto, servire a fasi successive.
+Pertanto la sua parte architetturale è formata dalle componenti:
 \begin{itemize}
-    \item \textbf{ADD}: Strumento aritmetico per l'incremento del program counter (differente dal componente di ALU);
-    \item \textbf{MUX}: Seleziona se considerare l'indirizzo di memoria successivo del program counter o un registro di memoria dettato dalla fase di MEM;
+    \item \textbf{ADD}: Al fine di favorire l'indipendenza dell'incremento del PC (operazione che avviene con la massima frequenza), l'operazione viene effettuata da un circuito dedicato, in modo da calcolare il prossimo indirizzo del PC senza interferire con altre operazioni dell'ALU principale, in modo da prevenire conflitti sulla pipe;
+    \item \textbf{MUX}: Seleziona se considerare l'indirizzo di memoria successivo del program counter o un registro di memoria dettato dalla fase di MEM (caso di istruzioni di salto);
     \item \textbf{PC}: Registro program counter;
-    \item \textbf{Istruction Memory}: Vado a prelevare l'istruzione da eseguire dalla memoria;
+    \item \textbf{Istruction Memory}: Prelievo dell'istruzione da eseguire dalla memoria;
 \end{itemize}
 
 \subsection{Fase di Decode}
-Nella fase di Decode, il MIPS, va a decodificare ed interpretare il comando. Le parti che compongono l'architettura della fase di decode sono:
+Nella fase di Decode, il MIPS, va a decodificare ed interpretare il comando. In particolare, vengono letti gli eventuali registri sorgente (nel caso di indirizzamento Register o Immediato) dal register file e memorizzati nel registro di comunicazione ID/EX. Nel caso di istruzioni con indirizzamento Immediato, i 16 bit del valore vengono convertiti in un valore a 32 bit estendendo il segno, e il valore così esteso viene inserito nel registro di comunicazione. Inoltre, il valore del PC precedentemente passato dalla fase di IF, viene propagato insieme alle altre informazioni al registro di comunicazione successivo. Osserviamo che il numero di registro destinazione in cui memorizzare un dato nella fase WB deve essere propagato lungo tutta la pipeline.
+Le parti che compongono l'architettura della fase di decode dunque sono:
 \begin{itemize}
     \item \textbf{Registers}: Registri interni del processore che possono essere pilotati sia in lettura che in scrittura tramite dei segnali esterni (contenuti nella sotto-architettura);
     \item \textbf{Sign-extend}: Blocco di estensione con segno dei possibili valori immediati contenuti nell'istruzione;
 \end{itemize}
 
+Il blocco estensione del segno è fondamentale perchè l'architettura MIPS utilizza istruzioni di lunghezza fissa di 32 bit per semplificare il design del processore e migliorare la velocità di decodifica, e dunque la codifica dei valori acceduti con indirizzamento immediato è fissata a 16 bit. L'estensione a 32 bit è necessaria perchè garantisce che il valore immediato possa essere direttamente utilizzato per le operazioni aritmetiche o logiche con i registri (che sono anch'essi a 32 bit).
+
 \subsection{Fase di Execute}
-Nella fase Execute viene eseguita effettivamente l'istruzione. La parte architetturale è composta da vari componenti interessanti
+Nella fase Execute viene eseguita effettivamente l'istruzione. In particolare, vengono prelevati i dati e i bit di controllo dal registro ID/EX e vengono effettuate le oeprazioni logico-aritmetiche dalla ALU, e i risultati vengono memorizzati nel registro di comunicazione EX/MEM. In caso di istruzioni di salto, viene presa la decisione di saltare o meno, e viene calcolato il nuovo valore di PC, che viene inserito nel registro di comunicazione EX/MEM. In caso di istruzioni load/store, viene calcolato l'indirizzo dell'operando in memoria e posto in EX/MEM. 
+La parte architetturale è composta da vari componenti interessanti.
 \begin{itemize}
-    \item \textbf{Add}: Strumento che viene utilizzato per calcolare un eventuale offset rispetto ad un valore;
-    \item \textbf{Shift left 2}: Vado a moltiplicare per 4 il valore per cui voglio saltare (in modo da saltare a 4 indirizzi più avanti);
-    \item \textbf{ALU}: Strumento di calcolo aritmetico;
-    \item \textbf{Multiplexer}: Vedo se devo selezionare il dato immediato o un secondo dato proveniente da un registro;
+    \item \textbf{Add}: Strumento che viene utilizzato per calcolare un eventuale offset rispetto ad un valore, e viene utilizzato per calcolare il nuovo valore del PC in caso di salti condizionati o incondizionati;
+    \item \textbf{Shift left 2}: Moltiplica per 4 il valore per cui voglio saltare (in modo da saltare a 4 indirizzi più avanti);
+    \item \textbf{ALU}: Strumento di calcolo aritmetico-logico;
+    \item \textbf{Multiplexer}: Seleziona o il dato immediato o un secondo dato proveniente da un registro, proveniente dalla fase precedente;
 \end{itemize}
 
 \subsection{Fase di Mem}
-Nella fase di memorizzazione vado ad interagire con la memoria per effettuare o operazioni di lettura o operazioni di scrittura
-La sua architettura è composta principalmente dal singolo elemento di accesso alla memoria dati
+Nella fase di memorizzazione avviene l'accesso alla memoria dati, secondo l'indirizzo comunicato dalla fase precedente nel registro EX/MEM. In caso di istruzione di LOAD, il dato viene letto e propagato nel registro MEM/WB. 
+La sua architettura è composta principalmente dal singolo elemento di accesso alla memoria dati.
 
 \subsection{Fase di Write Back}
-In tale fase vado a verificare cosa bisogna scrivere all'interno dei registri interni. Il componente che meglio indica il suo funzionamento è il multiplexer finale che serve per specificare se il dato da caricare all'interno dei registri sia il risultato dell'ALU o qualche valore proveniente dalla memoria
+In tale fase vado a verificare cosa bisogna scrivere all'interno dei registri interni. Il componente che meglio indica il suo funzionamento è il multiplexer finale che serve per specificare se il dato da caricare all'interno dei registri sia il risultato dell'ALU o qualche valore proveniente dalla memoria dati. 
 
 \subsection{Registri Intermedi}
 I registri che sono posti tra una fase e l'altra della pipeline sono molto più complessi di quel che si crede. Essi non contengono solo dati informativi (operandi e risultati), ma contengono anche: traccia dell'operazione da effetture, destinazione del risultato ecc. 
 L'architettura e le componenti di cui si è parlato sopra, quindi, sono solo una parte di quello che è effettivamente stato realizzato sull'hardware del dispositivo.
-La schematizzazione che abbiamo fatto ci permette di capire bene il funzionamento di un sistema pipeline senza entrare troppo nei dettagli della sua implementazione hardware
+La schematizzazione che abbiamo fatto ci permette di capire bene il funzionamento di un sistema pipeline senza entrare troppo nei dettagli della sua implementazione hardware.
 
-\subsection{Gestione dei Salti}
-L'architettura pipeline ha una criticità di cui abbiamo già attentamente discusso in precedenza, i salti.
-Quando sopraggiunge un istruzione di salto, riusciamo a captare che è così solo nella fase di esecuzione dell'istruzione, e quindi, se dovessimo aggiustare il PC seguendo tutta la pipe, dovremmo aspettare la fase di write back. Ma per evitare tale situazione, andiamo a retroazionare la fase di esecuzione con la fase di Istruction Fetch. Tale retroazione permette di capire quando e dove poi si andrà a saltare. Ciò però deve prevedere il sacrificio o l'introduzione di un istruzione "vittima", tale istruzione sarà eseguita indipendentemente a dove si andrà a saltare. Tale istruzione è la no-operation (NOP), che viene inserita subito dopo la JMP per evitare la perdita di eventuali istruzioni utili.
-Tale soluzione è molto buona quando lavoro con il MIPS, poichè questo è caratterizzato dalla sua particolare pipe molto corta (e quindi molto RISC), ma nei processori più moderni, posso avere delle pipe molto più profonde ed articolate. Una soluzione alternativa a quella proposta precedentemente è quella di utilizzare la branch-prediction
+\subsection{Gestione dei Salti} \label{par:MIPS_gestione_salti}
+L'architettura pipeline ha una criticità di cui abbiamo già attentamente discusso in precedenza, i salti. 
+Quando sopraggiunge un istruzione di salto, riusciamo a captare che è così solo nella fase di esecuzione dell'istruzione, mentre la pipe ha continuato a caricare le istruzioni in modo sequenziale, che si troveranno rispettivamente nella fase di IF e ID e non avranno quindi ancora modificato lo stato del processore e della memoria. Nel caso in cui il salto non deve essere eseguito, allora la pipe continuerà a funzionare normalmente, mentre se il salto deve essere eseguito, le istruzioni caricate dovranno essere eliminate dalla pipe (\textit{pipe flush}) e dovrà essere caricata l'istruzione a cui punta il salto e le successive. Il ritardo che segue quest'ultimo caso è detto \textit{branch penalty}. L'obiettivo è quello di confinare la gestione dei salti nelle fasi IF e ID, perchè in quelle fasi le istruzioni non hanno ancora modificato lo stato del processore e della memoria, e quindi la rete di controllo hardware deve riguardare solo queste due fasi.
+In generale, il problema è risolvibile fondamentalmente mediante due approcci: l'approccio conservativo e l'approccio ottimistico (\textit{branch prediction}).
+Nel caso dell'approccio conservativo, quando il processore interpreta durante la fase ID un'istruzione come istruzione di salto, ferma la pipe e disabilita la propagazione dell'istruzione che si trova erroneamente nella fase IF, determina l'istruzione a cui saltare in fase EX e la preleva. Si torna insomma al modello sequenziale di Von Neumann. Il conto è salato se consideriamo che le istruzioni di salto costituiscono il 25\% di un programma, e infatti ne consegue un notevole spreco delle risorse di parallelismo fornite dalla pipe. Questo approccio è \textit{leggermente} migliorabile attraverso l'hardware, anticipando la decisione inerente al salto alla fase di ID, in base alla condizione di salto. Ad esempio l'istruzione \lstinline|JNZ <LABEL>| controlla se il flag Z del SR è alto, e in tal caso non occorre saltare e quindi l'istruzione che si è prelevata nel frattempo è giusta. Molti ritardi possono essere  evitati dal programmatore o dal compilatore: il programmatore può contribuire al buon funzionamento del sistema, scrivendo le istruzioni in un ordine tale da minimizzare le probabilità di stallo della pipe. Nel caso di un costrutto if-then-else, ad esempio, conviene inserire nel ramo then l'alternativa più probabile. Il compilatore, da parte sua, può operare vari accorgimenti; ad esempio, siccome un ciclo for è sempre tradotto in un if-then-else, esso deve inserire l'alternativa più probabile nel ramo then.
+In fase di compilazione è possibile evitare l'approccio conservativo. Se immediatamente prima del salto c'è un'istruzione con operandi da cui non dipende l'esito della scelta di saltare o meno, è possibile in fase di compilazione inserire l'istruzione indipendente dopo il branch, in modo da sfruttare lo slot di tempo in cui l'istruzione viene caricata ed entra nella pipe, e quindi non c'è bisogno di pipe flush. Qualora non sia possibile invertire una istruzione if con quella che la precede, il compilatore potrebbe decidere di mettere subito dopo la if una \textbf{nop}, istruzione che non ha alcun effetto e quindi non è mai errato inserirla nella pipe. In questo modo si può operare senza considerare alcun tipo di approccio. Possiamo aggiungere che se stiamo considerando un'istruzione di salto in un processore CISC con una condizione di salto elaborata, allora il numero di nop che bisogna inserire a seguito dell'istruzione di salto risulta essere superiore a 1, in quanto ricordiamo che la pipe per i CISC è più lunga e la valutazione della condizione coinvolge più fasi oltre le prime due, di caricamento e decodifica.
+Una soluzione meno conservativa a quella appena presentata è di utilizzare la \textbf{branch-prediction} (approccio ottimistico).
+
+% Per Agostino: Ho cambiato interamente questa sezione in accordo agli appunti di de Benedictis, molto più sensati e chiari di quanto farfugliato a lezione.
+
+
+% e quindi, se dovessimo aggiustare il PC seguendo tutta la pipe, dovremmo aspettare la fase di write back. L'obiettivo è quello di confinare la gestione dei salti nelle fasi IF e ID, perchè in quelle fasi le istruzioni non hanno ancora modificato lo stato del processore e della memoria, e quindi la rete di controllo hardware deve riguardare solo queste due fasi. Per evitare tale situazione di inefficienza, andiamo a retroazionare la fase di esecuzione con la fase di Istruction Fetch. Tale retroazione permette di capire quando e dove poi si andrà a saltare. Ciò però deve prevedere il sacrificio o l'introduzione di un istruzione "vittima", tale istruzione sarà eseguita indipendentemente a dove si andrà a saltare. Tale istruzione è la no-operation (NOP), che viene inserita subito dopo la JMP per evitare la perdita di eventuali istruzioni utili.
+% Tale soluzione è molto buona quando lavoro con il MIPS, poichè questo è caratterizzato dalla sua particolare pipe molto corta (e quindi molto RISC), ma nei processori più moderni, posso avere delle pipe molto più profonde ed articolate. 
 
 \subsubsection{Branch prediction}
 La branch prediction è una tecnica che cerca di prevedere a quale ramo un istruzione di salto condizionato possa saltare. Tale tecnica valuta le prestazioni in base a quanto si possa "perdere" in termini di efficienza (ricaricare il branch corretto rispetto a quello predetto).
