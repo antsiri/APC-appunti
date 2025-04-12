@@ -13,10 +13,15 @@ jobs:
       - name: Checkout del repository
         uses: actions/checkout@v3
 
-      - name: Installazione di LaTeX
+      - name: Installazione di LaTeX (inclusa lingua italiana)
         run: |
           sudo apt-get update
-          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended latexmk
+          sudo apt-get install -y \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-lang-italian \
+            latexmk
 
       - name: Compilazione del file LaTeX in PDF
         run: |
