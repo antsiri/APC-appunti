@@ -1,0 +1,35 @@
+name: Genera PDF al push su main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-commit-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repository
+        uses: actions/checkout@v3
+
+      - name: Installazione di LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended latexmk
+
+      - name: Compilazione del file LaTeX in PDF
+        run: |
+          mkdir -p pdf_output
+          latexmk -pdf -output-directory=pdf_output main.tex
+
+      - name: Configurazione di Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit e push del PDF generato
+        run: |
+          git add pdf_output/main.pdf
+          git commit -m "Aggiornamento automatico del PDF dopo il push su main" || echo "Nessuna modifica da committare"
+          git push
