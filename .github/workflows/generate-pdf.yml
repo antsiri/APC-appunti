@@ -21,12 +21,14 @@ jobs:
             texlive-latex-extra \
             texlive-fonts-recommended \
             texlive-lang-italian \
-            latexmk
+            latexmk \
+            rsync
 
       - name: Compilazione del file LaTeX in PDF
         run: |
           mkdir -p pdf_output
-          latexmk -pdf -output-directory=pdf_output main.tex
+          rsync -a --include '*/' --exclude '*' chapters/ pdf_output/chapters/
+          latexmk -pdf -output-directory=pdf_output -f main.tex
 
       - name: Configurazione di Git
         run: |
