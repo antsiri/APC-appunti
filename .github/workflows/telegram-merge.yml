@@ -13,9 +13,12 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
         run: |
           MESSAGE="✅ Merge avvenuto su *main* nel repo: $GITHUB_REPOSITORY\n🔀 Commit: $GITHUB_SHA\n👤 Autore: $GITHUB_ACTOR"
           curl -s -X POST https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage \
             -d chat_id=${TELEGRAM_CHAT_ID} \
+            -d message_thread_id=${TELEGRAM_THREAD_ID} \
             -d text="$MESSAGE" \
             -d parse_mode="Markdown"
+
