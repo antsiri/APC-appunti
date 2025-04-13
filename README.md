@@ -1,6 +1,6 @@
 # Come leggere gli appunti
 Dopo ogni aggiornamento è stato predisposto un bot che compila il documento e lo pusha all'interno della cartella pdf_output. Bisogna stare attenti alla seguente cosa:
-l'ultimo commit disponibile è quello che riporta l'aggiornamento del pdf (poichè l'autocompilazione può richiedere qualche minuto)
+l'ultimo commit disponibile è quello che riporta l'aggiornamento del pdf (poichè l'autocompilazione può richiedere qualche minuto).
 
 # Strutturazione dell'operazione di scrittura
 ## Istruzioni sull'utilizzo di Git
