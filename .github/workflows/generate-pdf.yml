@@ -13,6 +13,20 @@ jobs:
       - name: Checkout del repository
         uses: actions/checkout@v3
 
+      - name: Verifica modifiche su file .tex
+        id: tex-check
+        run: |
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '\.tex$'; then
+            echo "tex_modified=true" >> $GITHUB_OUTPUT
+          else
+            echo "Nessuna modifica ai file .tex, il job verrà saltato."
+            echo "tex_modified=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Interrompi se nessun .tex è stato modificato
+        if: steps.tex-check.outputs.tex_modified == 'false'
+        run: exit 0
+
       - name: Installazione di LaTeX (inclusa lingua italiana)
         run: |
           sudo apt-get update
