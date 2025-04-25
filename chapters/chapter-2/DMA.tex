@@ -55,7 +55,127 @@ Dati i due differenti canali si avranno 2 periferiche collegate allo stesso disp
 \begin{figure}
     \centering
     \includegraphics[width=.7\textwidth]{img/DMA.png}
-    \caption{DMA a 2 canali}\label{img:DMA}
+    \caption{Modello di programmazione DMA a 2 canali}\label{img:DMA}
 \end{figure}
 
+\subsection{Utilizzo effettivo in ASIM}
+Per capire al meglio come utilizzare il DMA, bisogna, in una prima fase, capire cosa tale DMA dovrà andare a fare ed in che modo esso dovrà lavorare. Per definire queste cose vi sono i registri di controllo (unico per tutti i canali) ed i registri di Modo (uno per ogni canale). Quando si va a dischiarare il componente all'interno del file di configurazione, si vanno a definire due indirizzi (address 1 ed address 2), che permettano di scandire tra di loro sedici locazioni. Ciò ci serve per permetterci di poter accedere ai vari registri presenti all'interno del DMA, andandoli ad astrarre in registri di memoria (Memory-mapped). Precisamente, il funzionamento è gestito dal decodificatore collegato sul pin \textbf{CS}, che va ad attivare il pin quando nota un indirizzo facente parte dell'insieme [address1, address2]. All'interno del file di configurazione vi sono anche le altre voci, che identificano specificatamente come il componente si collega ai vari BUS e ai vari componenti. Una buona architettura di tale sistema è quella che si può osservare nella figura [\ref{img:architettura-dma}]
 
+\begin{figure}
+    \centering
+    \includegraphics[width=.5\textwidth]{img/architettura-dma.png}
+    \caption{Montaggio del componente DMA rispetto al sistema generale}\label{img:architettura-dma}
+\end{figure}
+
+Una volta compresa l'architettura del sistema, possiamo iniziare a comprendere in che modo andare a configurare il funzionamento del  DMA. Precisamente andiamo a vedere in primis il significato associato ai bit dei vari registri interni al componente.
+Il primo registro che si può andare ad approfondire è il registro Mode, di cui ne sono presenti 2, uno per il primo canale ed uno per il secondo canale. Tale registro serve principalmente a 
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|p{11cm}|}
+    \hline
+    \textbf{Bit} & \textbf{Significato} \\
+    \hline
+    0 & Instrada il dato su un canale, 0 per il canale 0 ed 1 per il canale 1 \\
+    1-2 & Non utilizzati \\
+    3 & Indica la direzione di trasferimento: 0 -> Da memoria ad interfaccia, 1 -> Da interfaccia a memoria \\
+    4 & Abilita la \textbf{Autoinizializzazione}, e quindi se impostato a 1, quando il DMA termina il "conteggio" resetta i suoi registri con i reciproci registri di base \\
+    5 & Definisce se vogliamo effettuare l'incremento di CADDR (caso di 0) oppure vogliamo impostare il decremento (caso di 1) \\
+    6 & Non Utilizzato \\
+    7 & Imposta la modalità di trasferimento: 0 -> Single, 1 -> Block. Ad ogni funzionamento si ha una gestione differente del BUS (nel caso block solo alla fine del trasferimento) \\
+    \hline
+    \end{tabular}
+    \caption{Significato dei bit dei registri MODE}\label{tab:MODE-8237}
+\end{table}
+
+Oltre alla configurazione del singolo canale, devo anche impostare il registro di controllo dell'intero DMA controller.
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|p{11cm}|}
+    \hline
+    \textbf{Bit} & \textbf{Significato} \\
+    \hline
+    0 & Termina conteggio per il canale 0 \\
+    1 & Termina conteggio per il canale 1 \\
+    2 & è stata inoltrata una richiesta al canale 0 \\
+    3 & è stata inoltrata una richiesta al canale 1 \\
+    4 & Non Utilizzato \\
+    5 & Abilita il trasferimento da memoria a memoria \\
+    6 & Impone che in un trasferimento da memoria a memoria, l'indirizzo sorgente rimanga costante \\
+    7 & Abilita il DMA controller \\
+    \hline
+    \end{tabular}
+    \caption{Significato dei bit dei registri CTRL}\label{tab:CTRL-8237}
+\end{table}
+
+\subsection{Implementazione in Motorola 68k}
+Le implementazioni in ASIM con motorola 68k sfruttano varie architatture (descritte da dei file di configurazione). Una volta definita l'architettura si va a definire in che modo bisogna gestire i registri e l'iutilizzo delle periferiche (Come il DMA). Pertanto, bisogna distinguere i differenti utilizzi del DMA, per cui si divideranno le varie casistiche.
+
+\subsubsection{Caso Memoria-Memoria}
+Nel caso memoria-memoria, il DMA richiede una particolare definizione. Le prime cose che bisogna fare sono, la definizione dell'area dati (dove prendere e dove trasferire i dati). E la definizione degli intervalli per l'accesso ai vari registri interni del DMA.
+\begin{lstlisting}
+* Area dati
+                ORG 		$9500
+origine	        DC.B		'0123456789 messaggio da trasferire'
+destinazione	  DS.B	    34
+
+* Definizione di indirizzo ed offset per l'accesso ai registri del DMA
+dma		EQU 		$2010
+caddr0		EQU		0
+caddr1		EQU		2
+ccount1	EQU		3
+cntrl		EQU		8
+mode		EQU		11
+reset		EQU		13
+clearmf	EQU		14
+writeamf	EQU		15
+nbyte		EQU		34
+\end{lstlisting}
+
+Una volta definita tutta la parte "statica" ovvero comprendente solo i dati utili per le configurazione, si passa alla parte operativa, dove si va a configurare effettivamente il dispositivo e si va ad avviare il suo funzionamento
+\begin{lstlisting}
+        ORG 	$8200
+        * Carico l'indirizzo del DMA
+	    MOVE.W	    #dma,A0			
+
+        * Carico l'indirizzo di origine dei dati all'interno del primo
+        * registro indirizzo
+	    MOVE.W  	#origine,caddr0(A0)
+        
+        * Carico l'indirizzo di destinazione dei dati all'interno
+        * del secondo registro indirizzo
+        MOVE.W  	#destinazione,caddr1(A0)		
+
+        * Carico il numero di caratteri da cui e' composta
+        * la stringa all'interno del secondo counter
+	    MOVE.B  	#nbyte,ccount1(A0)		
+
+        * Imposto una comunicazione (in base ai bit) che 
+        * dev'essere block, con incremento ed Autoinizializzazione
+        * definendo una comunicazione memoria-interfaccia per il primo canale
+        * Sto settando il primo canale utilizzando un VALORE pari
+        MOVE.B  	#$90,mode(A0)		
+
+        * Faccio una configurazione eguale a quella di prima solo che vario
+        * il bit meno significativo per settare tramite VALORE
+        * il secondo canale di comunicazione
+	    MOVE.B	    #$91,mode(A0)		
+
+        * Vado a settare l'ultimo registro, quello di controllo
+        * che permette al DMA di poter iniziare a lavorare
+	    MOVE.B	    #$A0,cntrl(A0)			
+
+* Ciclo di attesa che simula lavoro del processore
+loop	JMP	    loop
+\end{lstlisting}
+
+Una volta impostato il DMA e fatto partire, bisogna gestire l'interruzione che sarà scatenata quando esso avrà finito di lavorare. (pertanto, dato che stiamo lavorando con le interrupt, nel caso di asim, dobbiamo impostare la memoria in modo da inserire l'indirizzo della ISR all'interno della tabella delle ISR autovettorizzate).
+L'ISR che si va a scrivere per il DMA, è una ISR che ha come unico scopo quello di resettare il DMA. Per cui si avrà:
+\begin{lstlisting}
+	    ORG $8700
+int7	MOVE.L	A0,-(A7)			;Salva il contesto
+		MOVE.W	#dma,A0					
+		MOVE.B	#0,reset(A0)			;Resetta il DMA
+		MOVE.L	(A7)+,A0			;Ripristina i registri utilizzati
+		RTE
+\end{lstlisting}
